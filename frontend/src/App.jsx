@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Register from "./pages/Register";
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
 import MagicLogin from './pages/MagicLogin';
 
 function App() {
@@ -10,13 +10,16 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard email="test@gmail.com" />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/magic-login" element={<MagicLogin />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 export default App;
