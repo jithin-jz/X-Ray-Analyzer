@@ -45,25 +45,26 @@ export default function MagicLogin() {
   }, [navigate, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="glass-panel w-full max-w-md p-8 animate-fade-in relative overflow-hidden text-center">
-        {/* Glow orb decorator */}
-        <div className={`absolute -top-20 right-0 w-40 h-40 rounded-full blur-[80px] opacity-20 pointer-events-none ${isSuccess === true ? 'bg-green-500' : isSuccess === false ? 'bg-red-500' : 'bg-indigo-500'}`}></div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50/50">
+      <div className="glass-panel w-full max-w-md p-8 animate-fade-in text-center">
 
-        <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg ${isSuccess === true ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/30' : isSuccess === false ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/30' : 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30'}`}>
+
+        <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg ${isSuccess === true ? 'bg-green-50 shadow-green-100 border border-green-100' : isSuccess === false ? 'bg-red-50 shadow-red-100 border border-red-100' : 'bg-blue-50 shadow-blue-100 border border-blue-100'}`}>
           {isSuccess === true ? (
-              <CheckCircle className="text-white w-8 h-8" />
+              <CheckCircle className="text-green-600 w-8 h-8" />
           ) : isSuccess === false ? (
-              <AlertCircle className="text-white w-8 h-8" />
+              <AlertCircle className="text-red-600 w-8 h-8" />
           ) : (
-              <KeyRound className="text-white w-8 h-8 animate-pulse" />
+              <KeyRound className="text-blue-600 w-8 h-8 animate-pulse" />
           )}
         </div>
+
         
-        <h2 className="text-2xl font-bold mb-2">Magic Login</h2>
-        <p className={`text-sm ${isSuccess === false ? 'text-red-400' : 'text-gray-400'}`}>
+        <h2 className="text-2xl font-bold mb-2 text-gray-900">Magic Login</h2>
+        <p className={`text-sm font-medium ${isSuccess === false ? 'text-red-600' : 'text-gray-500'}`}>
             {status}
         </p>
+
 
         {isSuccess === false && (
             <button onClick={() => navigate("/login")} className="btn-secondary mt-8">
