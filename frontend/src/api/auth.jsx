@@ -62,3 +62,12 @@ export const verifyPasskeyLogin = async (email, response) => {
     body: JSON.stringify(response),
   }).then(res => res.json());
 };
+
+export const logout = async () => {
+  return fetch(`${BASE_URL}/logout`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  }).then(res => res.json());
+};

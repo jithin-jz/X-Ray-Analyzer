@@ -17,7 +17,7 @@ async def register_user(data: RegisterSchema, background_tasks: BackgroundTasks,
     
     user = await db.users.find_one({"email": data.email})
     if user and user.get("is_verified"):
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise HTTPException(status_code=400, detail="User already exists with this email. Please login.")
 
     hashed_password = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -57,10 +57,15 @@ async def verify_otp(email: str = Body(...), otp: str = Body(...), db=Depends(ge
     
     # Valid! Update user
     await db.users.update_one({"email": email}, {"$set": {"is_verified": True}})
+    
+    # Check if they already have a passkey (possible on recovery/re-registration)
+    user = await db.users.find_one({"email": email})
+    has_passkey = bool(user.get("credential_id"))
+    
     del otp_store[email]
     
     token = create_access_token({"sub": email})
-    return {"message": "Registration complete", "token": token}
+    return {"message": "Registration complete", "token": token, "has_passkey": has_passkey}
 
 
 @router.post("/login")
@@ -78,15 +83,26 @@ async def login_user(data: LoginSchema, db=Depends(get_db)):
         raise HTTPException(status_code=403, detail="Account not verified. Register again to receive OTP.")
 
     token = create_access_token({"sub": data.email})
+    has_passkey = bool(user.get("credential_id"))
 
-    return {"message": "Login success", "token": token}
+    return {"message": "Login success", "token": token, "has_passkey": has_passkey}
+
+
+@router.post("/logout")
+async def logout():
+    """
+    Handles user logout. Since we use JWT, the client is responsible for 
+    discarding the token. This endpoint can be used to clear any HTTP-only cookies 
+    if implemented in the future.
+    """
+    return {"message": "Logged out successfully"}
 
 @router.post("/forgot-password")
 async def forgot_password(email: str = Body(...), origin: str = Body(...), background_tasks: BackgroundTasks = None, db=Depends(get_db)):
     user = await db.users.find_one({"email": email})
     if not user:
         # Don't reveal if user exists
-        return {"message": "If the account exists, a magic link was sent."}
+        return {"message": "If the account exists, a updation link was sent to this mail."}
     
     # Generate a magic link token (valid for 15 mins) that signs their email. 
     # Use create_access_token natively.
@@ -96,7 +112,7 @@ async def forgot_password(email: str = Body(...), origin: str = Body(...), backg
     if background_tasks:
         background_tasks.add_task(send_magic_link_email, email, reset_token, origin)
         
-    return {"message": "If the account exists, a magic link was sent."}
+    return {"message": "If the account exists, a updation link was sent to this mail."}
 
 
 
