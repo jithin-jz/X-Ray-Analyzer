@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-import { startPasskeyRegister, verifyPasskeyRegister } from "../api/auth";
+import { startPasskeyRegister, verifyPasskeyRegister, logout } from "../api/auth";
 import { startRegistration } from "@simplewebauthn/browser";
 import { LogOut, Fingerprint, Activity, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
+  const [showPasskeyModal, setShowPasskeyModal] = useState(false);
 
 
   useEffect(() => {
@@ -26,14 +27,58 @@ export default function Dashboard() {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       setEmail(payload.sub || "user@example.com");
+
+      // Passkey Promotion Logic
+      const hasPasskey = localStorage.getItem("has_passkey") === "true";
+      const isSkipPrompt = localStorage.getItem("skipPasskeyPrompt") === "true";
+
+      if (!hasPasskey && !isSkipPrompt) {
+        // Show after a short delay for better UX
+        const timer = setTimeout(() => setShowPasskeyModal(true), 1500);
+        return () => clearTimeout(timer);
+      }
     } catch (e) {
       console.error("Failed to decode token", e);
     }
   }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Server-side logout failed, clearing local session anyway", error);
+    }
     localStorage.removeItem("token");
+    localStorage.removeItem("has_passkey");
     navigate("/login");
+  };
+
+  const handleCreatePasskey = async () => {
+    try {
+      const options = await startPasskeyRegister(email);
+      const credential = await startRegistration({ optionsJSON: options });
+      const res = await verifyPasskeyRegister(email, credential);
+
+      if (res.error || res.detail) {
+        throw new Error(res.error || res.detail);
+      }
+
+      localStorage.setItem("has_passkey", "true");
+      setShowPasskeyModal(false);
+      alert("Passkey created successfully! Your account is now secured.");
+    } catch (e) {
+      console.error(e);
+      alert("Passkey setup was not completed.");
+    }
+  };
+
+  const handleDismissPrompt = () => {
+    setShowPasskeyModal(false);
+  };
+
+  const handlePermanentSkip = () => {
+    localStorage.setItem("skipPasskeyPrompt", "true");
+    setShowPasskeyModal(false);
   };
 
   const handleDragOver = (e) => {
@@ -73,6 +118,69 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar userEmail={email} onLogout={handleLogout} />
+
+      {/* --- Passkey Promotion Modal --- */}
+      {showPasskeyModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300"></div>
+
+          {/* Modal Card */}
+          <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-blue-900/10 border border-gray-100 animate-in zoom-in slide-in-from-bottom-8 duration-500">
+            <div className="flex flex-col items-center text-center space-y-8">
+              {/* Icon Cluster */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-100/50 blur-3xl rounded-full"></div>
+                <div className="relative w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-200 rotate-3 transform transition-transform hover:rotate-0 duration-300">
+                  <Fingerprint className="w-10 h-10" strokeWidth={1.5} />
+                </div>
+              </div>
+
+              {/* Text Content */}
+              <div className="space-y-4">
+                <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                  Secure Your Access <br />
+                  with <span className="text-blue-600">Pure Cryptography</span>
+                </h3>
+                <p className="text-gray-500 text-lg leading-relaxed font-light">
+                  Enhance your clinical security protocol. Replace vulnerable passwords with hardware-backed biometric authentication.
+                </p>
+              </div>
+
+              {/* Action Stack */}
+              <div className="w-full space-y-4 pt-4">
+                <button
+                  onClick={handleCreatePasskey}
+                  className="w-full py-4.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                  Register Secure Passkey
+                </button>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleDismissPrompt}
+                    className="flex-1 py-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-2xl transition-all"
+                  >
+                    Remind Later
+                  </button>
+                  <button
+                    onClick={handlePermanentSkip}
+                    className="flex-1 py-4 bg-transparent hover:bg-gray-50 text-gray-400 font-bold rounded-2xl border border-gray-100 transition-all text-xs uppercase tracking-widest"
+                  >
+                    Never show again
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-gray-300">
+                <Activity className="w-4 h-4" />
+                <span className="text-[10px] uppercase font-bold tracking-tighter">WebAuthn Security Standard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 pt-32 pb-20">
         <div className="flex flex-col items-center space-y-20">

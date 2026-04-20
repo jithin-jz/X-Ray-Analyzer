@@ -57,6 +57,7 @@ export default function Auth() {
       const res = await loginUser({ email, password });
       if (res.token) {
         localStorage.setItem("token", res.token);
+        localStorage.setItem("has_passkey", res.has_passkey ? "true" : "false");
         navigate("/dashboard");
       } else {
         setError(res.error || res.detail || "Invalid credentials");
@@ -84,6 +85,7 @@ export default function Auth() {
       const res = await verifyPasskeyLogin(email, credential);
       if (res.token) {
         localStorage.setItem("token", res.token);
+        localStorage.setItem("has_passkey", "true");
         navigate("/dashboard");
       } else {
         setError(res.error || res.detail || "Passkey login failed.");
@@ -135,6 +137,7 @@ export default function Auth() {
       const res = await verifyOtp(email, otp);
       if (res.token) {
         localStorage.setItem("token", res.token);
+        localStorage.setItem("has_passkey", res.has_passkey ? "true" : "false");
         setRegStep('passkey_prompt');
       } else {
         setError(res.detail || res.error || "Invalid OTP code");
