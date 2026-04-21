@@ -1,20 +1,18 @@
-import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
 from backend.config import settings
 
 # Setup Jinja2 environment
-template_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "templates",
-    "email",
-)
+# Path(__file__).resolve() is backend/backend/services/email_service.py
+# .parent.parent.parent goes up to the root backend/ folder
+template_dir = Path(__file__).resolve().parent.parent.parent / "templates" / "email"
 
-env = Environment(loader=FileSystemLoader(template_dir))
+env = Environment(loader=FileSystemLoader(str(template_dir)))
 
 
 def send_email(to_email: str, subject: str, html_body: str):
