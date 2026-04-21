@@ -1,61 +1,50 @@
-# X-Ray Analyzer
+# AI X-Ray Analyzer
 
-An AI-powered X-Ray Analysis backend application built with FastAPI and MongoDB.
+A high-performance web application designed for intelligent X-Ray diagnostic analysis. Built with FastAPI and MongoDB, with a focus on Passkey-based security and modular AI integration.
 
-## Features (Backend)
+## Features
 
-- **FastAPI** framework for high-performance API endpoints.
-- **MongoDB** integration for database storage.
-- Dockerized setup with **Docker Compose** for easy development and deployment.
-- Modular architecture with dedicated directories for AI analysis (`dev_ai`), RAG pipelines (`dev_rag`), and core backend services.
-
-## Prerequisites
-
-- [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your machine.
+- **AI Analysis**: Advanced diagnostic processing of medical imaging using RAG and AI pipelines.
+- **Biometric Authentication**: WebAuthn-based Passkey integration for secure, passwordless authentication.
+- **Identity Verification**: Multi-layered security including OTP verification and Email Magic Links.
+- **Configuration Management**: Centralized settings architecture using Pydantic BaseSettings.
+- **Containerized Environment**: Orchestrated deployment via Docker Compose for consistent development workflows.
 
 ## Project Structure
 
-```
-.
-├── backend/
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt
-│   ├── main.py
-│   ├── .env
-│   ├── dev_ai/          # Directory for AI models and related logic
-│   ├── dev_backend/     # Configurations and database connections
-│   ├── dev_rag/         # Retrieval-Augmented Generation workflows
-│   ├── media/           # Local folder to cache or serve media
-│   └── services/        # Additional external services integration logic
-└── README.md
+```text
+├── backend/            # FastAPI Application
+│   ├── ai/             # AI Analysis logic
+│   ├── backend/        # Core settings, routes, and database
+│   ├── rag/            # Retrieval workflows
+│   └── main.py         # Application Entry point
+├── frontend/           # Diagnostic Interface (Vite/React)
+└── docs/               # Technical Documentation and Guides
 ```
 
-## Running the Application
+## Getting Started
 
-This project uses Docker Compose to run the FastApi application and MongoDB server together.
+### 1. Environment Configuration
+Create a `.env` file in the `backend/` directory and configure the required variables including Database and SMTP credentials.
 
-1. **Navigate to the backend directory**:
-    ```bash
-    cd backend
-    ```
+### 2. Deployment with Docker
+Execute the following command in the `backend/` directory to build and start the services:
+```bash
+docker compose up --build
+```
+The API services will be available at `http://localhost:8000`.
 
-2. **Build and start the containers**:
-    ```bash
-    docker compose up --build
-    ```
-    To run the containers in the background, add the `-d` flag: `docker compose up -d --build`.
+### 3. API Documentation
+The interactive API documentation can be accessed via:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
-3. **Verify it's running**:
-    Once the application starts, it will be available at `http://localhost:8000`.
-    Visit `http://localhost:8000/docs` to see the automatically generated, interactive API documentation provided by Swagger UI.
+## Maintenance and Code Quality
 
-4. **Stopping the project**:
-    If you want to stop the containers, run:
-    ```bash
-    docker compose down
-    ```
+To maintain code standards, execute the following commands within the containerized environment:
 
-## Environment Variables
+- **Code Formatting**: `docker compose exec api black .`
+- **Linting and Fixes**: `docker compose exec api ruff check --fix .`
 
-Make sure you configure your `.env` file in the `backend` directory appropriately. The `docker-compose.yml` automatically picks it up to inject environments securely.
+---
+*Developed for clinical-grade diagnostic workflows.*
