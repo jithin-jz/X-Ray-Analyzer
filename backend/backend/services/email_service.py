@@ -1,8 +1,20 @@
+import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from jinja2 import Environment, FileSystemLoader
+
 from backend.config import settings
+
+# Setup Jinja2 environment
+template_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "templates",
+    "email",
+)
+
+env = Environment(loader=FileSystemLoader(template_dir))
 
 
 def send_email(to_email: str, subject: str, html_body: str):
@@ -11,8 +23,6 @@ def send_email(to_email: str, subject: str, html_body: str):
             f"⚠️ SMTP credentials not configured. Skipping email to {to_email}. "
             "Ensure .env is loaded."
         )
-
-        print(f"Subject: {subject}\nBody: {html_body}")
         return
 
     msg = MIMEMultipart("alternative")
@@ -34,41 +44,15 @@ def send_email(to_email: str, subject: str, html_body: str):
 
 
 def send_otp_email(to_email: str, otp: str):
-    subject = "Verify Your Account"
-    body = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;
-                   padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #6366f1;">AI X-Ray Analyzer</h2>
-        <p>Thank you for registering! Please use the 6-digit OTP below to verify your
-           email address:</p>
-        <h1 style="font-size: 36px; letter-spacing: 4px; color: #333;">{otp}</h1>
-        <p style="color: #888; font-size: 12px;">If you did not request this, please
-           ignore this email.</p>
-      </body>
-    </html>
-    """
+    subject = "Your AI X-Ray Analyzer Verification Code"
+    template = env.get_template("otp.html")
+    body = template.render(otp=otp)
     send_email(to_email, subject, body)
 
 
 def send_magic_link_email(to_email: str, token: str, origin: str):
-    subject = "Recover Your Account"
+    subject = "Reset Your AI X-Ray Analyzer Password"
     magic_link = f"{origin}/magic-login?token={token}"
-    body = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;
-                   padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #8b5cf6;">AI X-Ray Analyzer Account Recovery</h2>
-        <p>We received a request to access your account without a password or
-           passkey.</p>
-        <p>Click the secure magic link below to instantly log in and set up a new
-           passkey:</p>
-        <a href="{magic_link}" style="display: inline-block; padding: 12px 24px;
-           background: #8b5cf6; color: white; text-decoration: none;
-           border-radius: 6px; font-weight: bold; margin: 20px 0;">Sign In Securely</a>
-        <p style="color: #888; font-size: 12px;">This link will expire soon. Do not
-           share it with anyone.</p>
-      </body>
-    </html>
-    """
+    template = env.get_template("magic_link.html")
+    body = template.render(magic_link=magic_link)
     send_email(to_email, subject, body)
