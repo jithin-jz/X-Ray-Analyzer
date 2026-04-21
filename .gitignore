@@ -23,7 +23,6 @@ wheels/
 .ruff_cache/
 
 # Environments
-.env
 .venv
 env/
 venv/
