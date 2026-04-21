@@ -1,0 +1,9 @@
+How to run formatting and linting manually:
+
+1. Format Code:
+docker compose exec api black .
+
+2. Lint and Auto-fix:
+docker compose exec api ruff check --fix .
+
+Note: Make sure your docker containers are running before executing these commands.
