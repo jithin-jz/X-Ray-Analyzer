@@ -1,0 +1,51 @@
+X-Ray Analyzer - Backend Architecture Overview
+
+This document provides a professional overview of the backend infrastructure for the X-Ray Analyzer project, primarily located within the 'backend/backend' directory.
+
+1. Technology Stack
+-------------------
+- Framework: FastAPI (Asynchronous, High-Performance Python Web Framework)
+- Database: MongoDB (NoSQL) with Motor (Async Driver)
+- Data Validation: Pydantic v2
+- Authentication:
+    - JWT (JSON Web Tokens) for session persistence
+    - WebAuthn/FIDO2 for Passkey support (biometric/hardware authentication)
+    - bcrypt for secure credential hashing
+- Configuration: Environment-based settings via Pydantic Settings
+- Templating: Jinja2 for responsive HTML email communication
+- Containerization: Docker and Docker Compose for consistent deployments
+
+2. Directory Structure & Modular Design
+---------------------------------------
+The backend follows a modular, feature-based architecture to ensure scalability and separation of concerns:
+
+- routes/: Interface Layer
+  Defines the API contract and handles HTTP request/response cycles. Each module (e.g., auth, passkey) is isolated in its own router.
+
+- models/: Persistence Layer
+  Defines the structure of documents within MongoDB and provides transformation utilities between database objects and Python dictionaries.
+
+- schemas/: Validation Layer
+  Leverages Pydantic models to enforce strict data types for API inputs and outputs, ensuring robust data integrity and automatic documentation.
+
+- services/: Logic Layer
+  Encapsulates the core business logic. By decoupling logic from routes, the application remains testable and maintainable.
+
+- utils/: Utility Layer
+  Shared helper functions for cross-cutting concerns such as email dispatch, security token generation, and formatting.
+
+- config.py: Configuration Management
+  Centralized management of application settings, secrets, and environment variables.
+
+- database.py: Connection Management
+  Handles the lifecycle of the asynchronous MongoDB client and database sessions.
+
+3. Functional Summary
+---------------------
+The backend serves as the orchestration layer for:
+- Secure User Identity Management: Providing multi-factor authentication options.
+- Data Integrity: Validating all incoming diagnostic and user data.
+- AI Integration: Orchestrating the ingestion and analysis of medical imaging data.
+- Professional Communication: Automated dispatch of verification and notification emails.
+
+This architecture is designed for production reliability, security compliance, and ease of future extension.
