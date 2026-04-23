@@ -11,8 +11,9 @@ from webauthn import (
 from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from backend.database import get_db
-from backend.services.webauthn_service import ORIGIN, RP_ID, RP_NAME, challenge_store
+from backend.services.webauthn_service import ORIGIN, RP_ID, RP_NAME
 from backend.utils.jwt_utils import create_access_token
+from backend.redis_client import set_challenge, get_challenge, delete_challenge
 
 router = APIRouter()
 
@@ -34,7 +35,7 @@ async def passkey_register_start(email: str, db=Depends(get_db)):
         user_display_name=email,
     )
 
-    challenge_store[email] = options.challenge
+    set_challenge(email, options.challenge)
 
     return json.loads(options_to_json(options))
 
@@ -44,7 +45,7 @@ async def passkey_register_start(email: str, db=Depends(get_db)):
 async def passkey_register_verify(
     email: str, response: dict = Body(...), db=Depends(get_db)
 ):
-    expected_challenge = challenge_store.get(email)
+    expected_challenge = get_challenge(email)
     if not expected_challenge:
         raise HTTPException(status_code=400, detail="No active challenge")
 
@@ -79,6 +80,8 @@ async def passkey_register_verify(
         },
     )
 
+    delete_challenge(email)
+
     token = create_access_token({"sub": email})
     return {"message": "Passkey registered successfully", "token": token}
 
@@ -97,7 +100,7 @@ async def passkey_login_start(email: str, db=Depends(get_db)):
         ],
     )
 
-    challenge_store[email] = options.challenge
+    set_challenge(email, options.challenge)
 
     return json.loads(options_to_json(options))
 
@@ -111,7 +114,7 @@ async def passkey_login_verify(
     if not user or not user.get("credential_id"):
         raise HTTPException(status_code=400, detail="No passkey found")
 
-    expected_challenge = challenge_store.get(email)
+    expected_challenge = get_challenge(email)
     if not expected_challenge:
         raise HTTPException(status_code=400, detail="No active challenge")
 
@@ -126,6 +129,8 @@ async def passkey_login_verify(
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    delete_challenge(email)
 
     token = create_access_token({"sub": email})
     return {"message": "Passkey login success", "token": token}

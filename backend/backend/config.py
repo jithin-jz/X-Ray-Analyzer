@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     # MongoDB
     DATABASE_URL: str
     DB_NAME: str
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     # Email
     SMTP_HOST: str = "smtp.gmail.com"

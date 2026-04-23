@@ -8,11 +8,11 @@ from backend.database import get_db
 from backend.schemas.user_schema import LoginSchema, RegisterSchema
 from backend.services.email_service import send_magic_link_email, send_otp_email
 from backend.utils.jwt_utils import create_access_token
+from backend.redis_client import set_otp, get_otp, delete_otp
 
 router = APIRouter()
 
-# Simple in-memory stores (use Redis for production)
-otp_store = {}  # { "email": {"code": "123456", "expires": time.time() + 600} }
+# Simple in-memory stores replaced with Redis
 
 
 @router.post("/register")
@@ -48,7 +48,7 @@ async def register_user(
 
     # Generate 6-digit OTP
     otp_code = str(random.randint(100000, 999999))
-    otp_store[data.email] = {"code": otp_code, "expires": time.time() + 600}  # 10 mins
+    set_otp(data.email, otp_code)  # Defaults to 10 mins TTL
 
     # Send email in background
     background_tasks.add_task(send_otp_email, data.email, otp_code)
@@ -58,12 +58,12 @@ async def register_user(
 
 @router.post("/verify-otp")
 async def verify_otp(email: str = Body(...), otp: str = Body(...), db=Depends(get_db)):
-    record = otp_store.get(email)
+    stored_code = get_otp(email)
 
-    if not record or record["expires"] < time.time():
+    if not stored_code:
         raise HTTPException(status_code=400, detail="OTP expired or invalid")
 
-    if record["code"] != otp:
+    if stored_code != otp:
         raise HTTPException(status_code=400, detail="Incorrect OTP")
 
     # Valid! Update user
@@ -73,7 +73,7 @@ async def verify_otp(email: str = Body(...), otp: str = Body(...), db=Depends(ge
     user = await db.users.find_one({"email": email})
     has_passkey = bool(user.get("credential_id"))
 
-    del otp_store[email]
+    delete_otp(email)
 
     token = create_access_token({"sub": email})
     return {
