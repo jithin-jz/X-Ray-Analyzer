@@ -1,43 +1,42 @@
 import { useState, useEffect } from "react";
-import { loginUser, startPasskeyLogin, verifyPasskeyLogin, forgotPassword, registerUser, verifyOtp, startPasskeyRegister, verifyPasskeyRegister } from "../api/auth";
+import {
+  loginUser, startPasskeyLogin, verifyPasskeyLogin, forgotPassword,
+  registerUser, verifyOtp, startPasskeyRegister, verifyPasskeyRegister
+} from "../api/auth";
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import {
-  Fingerprint, Mail, Lock, ArrowRight,
-  ShieldCheck, UserPlus, Zap, Database, Activity,
+  Fingerprint, Mail, Lock,
+  ShieldCheck, Zap, Database,
   ChevronLeft
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
 
-  // View state
   const [isLoginMode, setIsLoginMode] = useState(true);
-
-  // Global states
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Form states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [otp, setOtp] = useState("");
-  const [regStep, setRegStep] = useState('register'); // 'register', 'otp', 'passkey_prompt'
-
-  // Multi-tenant states
+  const [regStep, setRegStep] = useState('register');
   const [role, setRole] = useState("doctor");
   const [hospitalName, setHospitalName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
 
   useEffect(() => {
-    if (location.pathname === "/register") {
-      setIsLoginMode(false);
-    } else {
-      setIsLoginMode(true);
-    }
+    if (isAuthenticated) navigate("/dashboard", { replace: true });
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    setIsLoginMode(location.pathname !== "/register");
     setError("");
     setMessage("");
   }, [location.pathname]);
@@ -45,14 +44,10 @@ export default function Auth() {
   const toggleAuth = () => {
     setError("");
     setMessage("");
-    if (isLoginMode) {
-      navigate("/register");
-    } else {
-      navigate("/login");
-    }
+    navigate(isLoginMode ? "/register" : "/login");
   };
 
-  // --- Login Logic ---
+  // ── Login ──────────────────────────────────────────────────────────────
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -60,15 +55,15 @@ export default function Auth() {
     setIsLoading(true);
     try {
       const res = await loginUser({ email, password });
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("has_passkey", res.has_passkey ? "true" : "false");
+      if (res.access_token) {
+        await login(res.access_token, res.refresh_token, res.has_passkey);
+        toast.success("Welcome back!");
         navigate("/dashboard");
       } else {
         setError(res.error || res.detail || "Invalid credentials");
       }
     } catch (err) {
-      setError("Server error during login.");
+      setError(err.message || "Server error during login.");
     } finally {
       setIsLoading(false);
     }
@@ -76,26 +71,19 @@ export default function Auth() {
 
   const handlePasskeyLogin = async () => {
     setError("");
-    if (!email) {
-      setError("Please enter your email first to use Passkey.");
-      return;
-    }
+    if (!email) { setError("Please enter your email first."); return; }
     try {
       const options = await startPasskeyLogin(email);
-      if (options.detail || options.error) {
-        setError(options.detail || options.error);
-        return;
-      }
       const credential = await startAuthentication({ optionsJSON: options });
       const res = await verifyPasskeyLogin(email, credential);
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("has_passkey", "true");
+      if (res.access_token) {
+        await login(res.access_token, res.refresh_token, true);
+        toast.success("Biometric login successful");
         navigate("/dashboard");
       } else {
         setError(res.error || res.detail || "Passkey login failed.");
       }
-    } catch (e) {
+    } catch {
       setError("Passkey login cancelled or failed.");
     }
   };
@@ -104,19 +92,17 @@ export default function Auth() {
     e.preventDefault();
     setError("");
     setMessage("");
-    if (!email) {
-      setError("Please enter your email to recover your account.");
-      return;
-    }
+    if (!email) { setError("Enter your email to recover."); return; }
     try {
-      const res = await forgotPassword(email, window.location.origin);
-      setMessage(res.message || "Magic link sent to your email!");
-    } catch (err) {
+      await forgotPassword(email, window.location.origin);
+      toast.success("Recovery link sent!");
+      setMessage("Recovery link sent to your email!");
+    } catch {
       setError("Failed to send recovery email.");
     }
   };
 
-  // --- Register Logic ---
+  // ── Register ───────────────────────────────────────────────────────────
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
@@ -128,12 +114,13 @@ export default function Auth() {
 
       const res = await registerUser(payload);
       if (res.message && res.message.includes("OTP sent")) {
+        toast.success("Verification code sent to your email");
         setRegStep('otp');
       } else {
-        setError(res.detail || res.error || "Registration error occurred");
+        setError(res.detail || res.error || "Registration error");
       }
     } catch (err) {
-      setError("Server error during registration.");
+      setError(err.message || "Server error during registration.");
     } finally {
       setIsLoading(false);
     }
@@ -144,14 +131,14 @@ export default function Auth() {
     setError("");
     try {
       const res = await verifyOtp(email, otp);
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("has_passkey", res.has_passkey ? "true" : "false");
+      if (res.access_token) {
+        await login(res.access_token, res.refresh_token, res.has_passkey);
+        toast.success("Email verified successfully");
         setRegStep('passkey_prompt');
       } else {
-        setError(res.detail || res.error || "Invalid OTP code");
+        setError(res.detail || res.error || "Invalid OTP");
       }
-    } catch (e) {
+    } catch {
       setError("Error verifying OTP.");
     }
   };
@@ -162,21 +149,23 @@ export default function Auth() {
       const options = await startPasskeyRegister(email);
       const credential = await startRegistration({ optionsJSON: options });
       const res = await verifyPasskeyRegister(email, credential);
-      if (res.token) {
-        localStorage.setItem("token", res.token);
+      if (res.access_token) {
+        await login(res.access_token, res.refresh_token, true);
+        toast.success("Passkey registered! You're all set.");
         navigate("/dashboard");
       } else {
         setError(res.error || res.detail || "Passkey setup failed");
       }
-    } catch (e) {
-      setError("Error setting up passkey. You can set it up later.");
+    } catch {
+      toast("Passkey setup skipped. You can set it up later.", { icon: "👋" });
+      setError("Passkey setup skipped. You can set it up later.");
       setTimeout(() => navigate("/dashboard"), 2000);
     }
   };
 
   return (
     <div className="auth-page">
-      {/* Left Side: Professional Overview */}
+      {/* Left Side */}
       <div className="auth-left">
         <div className="max-w-xl mx-auto">
           <div className="mb-10">
@@ -191,10 +180,7 @@ export default function Auth() {
         </div>
       </div>
 
-
-
-
-      {/* Right Side: Auth Form Container */}
+      {/* Right Side */}
       <div className="auth-right">
         <div className="auth-card-container fade-slide-in" key={isLoginMode ? 'login' : 'register'}>
           {isLoginMode ? (
@@ -205,20 +191,11 @@ export default function Auth() {
                 </h2>
               </div>
 
-
-
-
-
-
               {error && (
-                <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm text-center">
-                  {error}
-                </div>
+                <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm text-center">{error}</div>
               )}
               {message && (
-                <div className="mb-6 p-3 rounded-lg bg-green-50 border border-green-100 text-green-600 text-sm text-center">
-                  {message}
-                </div>
+                <div className="mb-6 p-3 rounded-lg bg-green-50 border border-green-100 text-green-600 text-sm text-center">{message}</div>
               )}
 
               {isForgotMode ? (
@@ -227,8 +204,6 @@ export default function Auth() {
                     <Mail className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
                     <input className="input-field" placeholder="Email address" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
-
-
                   <button type="submit" className="btn-primary mt-2">Send Recovery Link</button>
                   <button type="button" onClick={() => setIsForgotMode(false)} className="w-full py-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">Back to sign in</button>
                 </form>
@@ -243,8 +218,6 @@ export default function Auth() {
                       <Lock className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
                       <input className="input-field" placeholder="Password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
                     </div>
-
-
                     <div className="text-right">
                       <button type="button" onClick={() => setIsForgotMode(true)} className="text-xs text-blue-600 hover:underline">Forgot password?</button>
                     </div>
@@ -256,12 +229,10 @@ export default function Auth() {
                     <div className="border-t border-gray-100 w-full absolute"></div>
                     <span className="bg-white px-4 text-[10px] text-gray-400 uppercase font-bold tracking-widest relative">Secure Method</span>
                   </div>
-
                   <button onClick={handlePasskeyLogin} className="btn-secondary">
                     <Fingerprint className="w-4 h-4" strokeWidth={1.5} />
                     Login with Biometrics
                   </button>
-
                 </>
               )}
 
@@ -270,8 +241,6 @@ export default function Auth() {
                   New member? <button onClick={toggleAuth} className="text-blue-600 font-semibold hover:underline">Create an account</button>
                 </p>
               </div>
-
-
             </div>
           ) : (
             <div className="h-full flex flex-col pt-4">
@@ -279,15 +248,8 @@ export default function Auth() {
                 <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Sign Up</h2>
               </div>
 
-
-
-
-
-
               {error && (
-                <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm text-center">
-                  {error}
-                </div>
+                <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm text-center">{error}</div>
               )}
 
               {regStep === 'register' ? (
@@ -303,7 +265,6 @@ export default function Auth() {
                       <input className="input-field pl-10" placeholder="Hospital Name" type="text" required value={hospitalName} onChange={e => setHospitalName(e.target.value)} />
                     </div>
                   )}
-
                   {role === 'doctor' && (
                     <div className="input-group">
                       <Zap className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
@@ -320,7 +281,6 @@ export default function Auth() {
                     <input className="input-field" placeholder="Create Password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
                   </div>
 
-
                   <button type="submit" className="btn-primary mt-2" disabled={isLoading}>
                     {isLoading ? "Creating..." : "Register Account"}
                   </button>
@@ -330,7 +290,7 @@ export default function Auth() {
                   <div className="text-center text-sm text-gray-500 mb-2">Check your email for the verification code.</div>
                   <input className="input-field text-center text-2xl tracking-[0.5rem] font-mono" placeholder="000000" maxLength={6} required value={otp} onChange={e => setOtp(e.target.value)} />
                   <button type="submit" className="btn-primary">Verify Identity</button>
-                  <button onClick={() => setRegStep('register')} className="w-full text-sm text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2">
+                  <button type="button" onClick={() => setRegStep('register')} className="w-full text-sm text-gray-500 hover:text-gray-900 flex items-center justify-center gap-2">
                     <ChevronLeft className="w-3 h-3" /> Change details
                   </button>
                 </form>
@@ -351,7 +311,6 @@ export default function Auth() {
                   Already a member? <button onClick={toggleAuth} className="text-blue-600 font-semibold hover:underline">Sign in instead</button>
                 </p>
               </div>
-
             </div>
           )}
         </div>

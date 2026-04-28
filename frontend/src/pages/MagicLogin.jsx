@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { KeyRound, CheckCircle, AlertCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function MagicLogin() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [status, setStatus] = useState("Authenticating...");
   const [isSuccess, setIsSuccess] = useState(null);
   const attempted = useRef(false);
@@ -14,15 +16,13 @@ export default function MagicLogin() {
     attempted.current = true;
 
     const token = searchParams.get("token");
-    
+
     if (!token) {
         setStatus("Invalid or missing Magic Link.");
         setIsSuccess(false);
         return;
     }
 
-    // In a real app we'd verify this via backend, but here it's already a valid JWT created natively.
-    // We can decode to ensure it's a magic link token.
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.type !== "magic_link") {
@@ -31,18 +31,15 @@ export default function MagicLogin() {
             return;
         }
 
-        // Token is valid! 
-        // We log the user in by saving the Magic JWT as their session token 
-        // (the backend will accept it because we used the same JWT Secret).
-        localStorage.setItem("token", token);
+        login(token, null, false);
         setStatus("Successfully authenticated!");
         setIsSuccess(true);
         setTimeout(() => navigate("/dashboard"), 2000);
-    } catch(e) {
+    } catch {
         setStatus("Failed to decode secure token.");
         setIsSuccess(false);
     }
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, login]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50/50">
