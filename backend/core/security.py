@@ -4,7 +4,7 @@ from typing import Optional
 import bcrypt
 import jwt
 
-from core.config import settings
+from core.settings import settings
 
 
 # ── JWT ──────────────────────────────────────────────────────────────────────

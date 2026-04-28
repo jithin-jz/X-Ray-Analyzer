@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from core.config import settings
+from core.settings import settings
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(settings.DATABASE_URL)
 
