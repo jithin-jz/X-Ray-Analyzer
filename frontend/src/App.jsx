@@ -4,12 +4,13 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import MagicLogin from './pages/MagicLogin';
+import Landing from "./pages/Landing";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
 
