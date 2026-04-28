@@ -27,6 +27,11 @@ export default function Auth() {
   const [otp, setOtp] = useState("");
   const [regStep, setRegStep] = useState('register'); // 'register', 'otp', 'passkey_prompt'
 
+  // Multi-tenant states
+  const [role, setRole] = useState("doctor");
+  const [hospitalName, setHospitalName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+
   useEffect(() => {
     if (location.pathname === "/register") {
       setIsLoginMode(false);
@@ -117,7 +122,11 @@ export default function Auth() {
     setError("");
     setIsLoading(true);
     try {
-      const res = await registerUser({ email, password });
+      const payload = { email, password, role };
+      if (role === 'hospital') payload.hospital_name = hospitalName;
+      if (role === 'doctor') payload.invite_code = inviteCode;
+
+      const res = await registerUser(payload);
       if (res.message && res.message.includes("OTP sent")) {
         setRegStep('otp');
       } else {
@@ -283,9 +292,28 @@ export default function Auth() {
 
               {regStep === 'register' ? (
                 <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="flex gap-2 mb-4">
+                     <button type="button" onClick={() => setRole('doctor')} className={`flex-1 py-2 text-sm rounded transition-colors ${role === 'doctor' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Doctor</button>
+                     <button type="button" onClick={() => setRole('hospital')} className={`flex-1 py-2 text-sm rounded transition-colors ${role === 'hospital' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Hospital Admin</button>
+                  </div>
+
+                  {role === 'hospital' && (
+                    <div className="input-group">
+                      <Database className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                      <input className="input-field pl-10" placeholder="Hospital Name" type="text" required value={hospitalName} onChange={e => setHospitalName(e.target.value)} />
+                    </div>
+                  )}
+
+                  {role === 'doctor' && (
+                    <div className="input-group">
+                      <Zap className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                      <input className="input-field pl-10" placeholder="Hospital Invite Code" type="text" required value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
+                    </div>
+                  )}
+
                   <div className="input-group">
                     <Mail className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />
-                    <input className="input-field" placeholder="Email address" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
+                    <input className="input-field pl-10" placeholder="Email address" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
                   <div className="input-group">
                     <Lock className="icon w-4 h-4 text-gray-400" strokeWidth={1.5} />

@@ -10,7 +10,7 @@ from webauthn import (
 )
 from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
-from backend.database import get_db
+from backend.database import get_master_db
 from backend.services.webauthn_service import ORIGIN, RP_ID, RP_NAME
 from backend.utils.jwt_utils import create_access_token
 from backend.redis_client import set_challenge, get_challenge, delete_challenge
@@ -20,7 +20,7 @@ router = APIRouter()
 
 # 🟡 STEP 1: Start Passkey Registration
 @router.post("/passkey/register/start")
-async def passkey_register_start(email: str, db=Depends(get_db)):
+async def passkey_register_start(email: str, db=Depends(get_master_db)):
     user = await db.users.find_one({"email": email})
     if not user:
         raise HTTPException(
@@ -43,7 +43,7 @@ async def passkey_register_start(email: str, db=Depends(get_db)):
 # 🟢 STEP 2: Verify Passkey Registration
 @router.post("/passkey/register/verify")
 async def passkey_register_verify(
-    email: str, response: dict = Body(...), db=Depends(get_db)
+    email: str, response: dict = Body(...), db=Depends(get_master_db)
 ):
     expected_challenge = get_challenge(email)
     if not expected_challenge:
@@ -82,13 +82,18 @@ async def passkey_register_verify(
 
     delete_challenge(email)
 
-    token = create_access_token({"sub": email})
+    user = await db.users.find_one({"email": email})
+    token = create_access_token({
+        "sub": email,
+        "role": user.get("role"),
+        "hospital_id": user.get("hospital_id")
+    })
     return {"message": "Passkey registered successfully", "token": token}
 
 
 # 🟡 STEP 3: Start Login
 @router.post("/passkey/login/start")
-async def passkey_login_start(email: str, db=Depends(get_db)):
+async def passkey_login_start(email: str, db=Depends(get_master_db)):
     user = await db.users.find_one({"email": email})
     if not user or not user.get("credential_id"):
         raise HTTPException(status_code=400, detail="No passkey found")
@@ -108,7 +113,7 @@ async def passkey_login_start(email: str, db=Depends(get_db)):
 # 🟢 STEP 4: Verify Login
 @router.post("/passkey/login/verify")
 async def passkey_login_verify(
-    email: str, response: dict = Body(...), db=Depends(get_db)
+    email: str, response: dict = Body(...), db=Depends(get_master_db)
 ):
     user = await db.users.find_one({"email": email})
     if not user or not user.get("credential_id"):
@@ -132,5 +137,9 @@ async def passkey_login_verify(
 
     delete_challenge(email)
 
-    token = create_access_token({"sub": email})
+    token = create_access_token({
+        "sub": email,
+        "role": user.get("role"),
+        "hospital_id": user.get("hospital_id")
+    })
     return {"message": "Passkey login success", "token": token}

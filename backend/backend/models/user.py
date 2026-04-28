@@ -5,4 +5,6 @@ def user_helper(user) -> dict:
         "is_verified": user.get("is_verified", False),
         "credential_id": user.get("credential_id"),
         "public_key": user.get("public_key"),
+        "role": user.get("role", "doctor"),
+        "hospital_id": user.get("hospital_id"),
     }

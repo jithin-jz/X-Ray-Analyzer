@@ -71,3 +71,21 @@ export const logout = async () => {
     }
   }).then(res => res.json());
 };
+
+export const fetchCurrentUser = async () => {
+  return fetch(`${BASE_URL}/me`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  }).then(res => res.json());
+};
+
+export const fetchDashboardData = async () => {
+  return fetch(`${BASE_URL}/dashboard-data`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  }).then(res => res.json());
+};

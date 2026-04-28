@@ -2,7 +2,7 @@ import React from 'react';
 import { Activity, LogOut, User, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const Navbar = ({ userEmail, onLogout }) => {
+const Navbar = ({ userEmail, onLogout, hospitalName }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,7 +16,13 @@ const Navbar = ({ userEmail, onLogout }) => {
           <div className="flex items-center justify-center text-blue-600">
             <Activity className="w-7 h-7" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight hidden sm:block">AI X-Ray <span className="text-blue-600">Analyzer</span></span>
+          <span className="text-xl font-bold text-gray-900 tracking-tight hidden sm:block">
+            {hospitalName ? (
+              <>{hospitalName} <span className="text-blue-600 font-medium">Portal</span></>
+            ) : (
+              <>AI X-Ray <span className="text-blue-600">Analyzer</span></>
+            )}
+          </span>
         </div>
 
         {/* Actions Section */}
