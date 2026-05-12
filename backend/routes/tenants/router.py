@@ -5,11 +5,8 @@ from core.database import get_master_db
 from core.dependencies import get_current_user, require_admin, require_superadmin
 from routes.tenants.schemas import TenantUpdateSchema
 from routes.tenants.service import (
-    deactivate_tenant,
-    get_tenant,
-    list_all_tenants,
-    regenerate_invite_code,
-    update_tenant,
+    deactivate_tenant, get_tenant, list_all_tenants,
+    regenerate_invite_code, update_tenant,
 )
 
 router = APIRouter(prefix="/tenants", tags=["Tenant Management"])
@@ -20,7 +17,6 @@ async def list_tenants(
     user: dict = Depends(require_superadmin),
     db: AsyncIOMotorDatabase = Depends(get_master_db),
 ):
-    """Superadmin: list all hospitals/tenants."""
     return await list_all_tenants(db)
 
 
@@ -29,7 +25,6 @@ async def get_my_tenant(
     user: dict = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_master_db),
 ):
-    """Get the current user's tenant info."""
     if not user.get("tenant_id"):
         return {"detail": "No tenant associated"}
     return await get_tenant(user["tenant_id"], db)

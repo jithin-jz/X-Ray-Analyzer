@@ -44,21 +44,21 @@ export default function Roster() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Staff Roster</h1>
-          <p className="text-gray-400 mt-1">{roster.length} doctor{roster.length !== 1 ? "s" : ""} in your hospital.</p>
+          <h1 className="text-[28px] font-bold text-[var(--ink)]">Staff Roster</h1>
+          <p className="text-[var(--ash)] mt-1">{roster.length} doctor{roster.length !== 1 ? "s" : ""} in your hospital.</p>
         </div>
       </div>
 
       {/* Invite code banner */}
       {user?.invite_code && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-blue-900">Invite Code</p>
-            <p className="text-sm text-blue-600">Share this code with doctors to join your hospital.</p>
+            <p className="font-bold text-[var(--ink)]">Invite Code</p>
+            <p className="text-sm text-[var(--primary)]">Share this code with doctors to join your hospital.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xl font-mono font-bold text-blue-700 bg-white px-4 py-2 rounded-xl border border-blue-100">{user.invite_code}</span>
-            <button onClick={() => { navigator.clipboard.writeText(user.invite_code); toast.success("Invite code copied!"); }} className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors">
+            <span className="text-xl font-mono font-bold text-[var(--ink)] bg-[var(--canvas)] px-4 py-2 rounded-[16px] border border-[var(--hairline)]">{user.invite_code}</span>
+            <button onClick={() => { navigator.clipboard.writeText(user.invite_code); toast.success("Invite code copied!"); }} className="p-2 bg-blue-100 hover:bg-blue-200 text-[var(--primary)] rounded-[16px] transition-colors">
               <Copy className="w-4 h-4" />
             </button>
           </div>
@@ -68,16 +68,16 @@ export default function Roster() {
       {roster.length === 0 ? (
         <EmptyState icon={Users} title="No doctors yet" description="Share your invite code to onboard doctors." />
       ) : (
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+        <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]  overflow-hidden divide-y divide-[var(--hairline)]">
           {roster.map((d) => (
-            <div key={d.email} className="px-6 py-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+            <div key={d.email} className="px-6 py-5 flex items-center justify-between hover:bg-[var(--surface-card)] transition-colors">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
                   {d.email?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{d.email}</p>
-                  <p className="text-xs text-gray-400">{d.role}</p>
+                  <p className="font-semibold text-[var(--ink)]">{d.email}</p>
+                  <p className="text-xs text-[var(--ash)]">{d.role}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export default function Roster() {
                 <Badge variant={d.has_passkey ? "info" : "default"}>
                   {d.has_passkey ? "Passkey" : "Password"}
                 </Badge>
-                <button onClick={() => setConfirmRemove(d.email)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove">
+                <button onClick={() => setConfirmRemove(d.email)} className="p-2 text-[var(--ash)] hover:text-red-600 hover:bg-red-50 rounded-[16px] transition-colors" title="Remove">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

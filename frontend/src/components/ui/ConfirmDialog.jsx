@@ -1,28 +1,23 @@
-import { AlertTriangle } from "lucide-react";
-
-export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", variant = "danger" }) {
+export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm" }) {
   if (!isOpen) return null;
 
-  const variants = {
-    danger: { icon: "bg-red-50 text-red-600", btn: "bg-red-600 hover:bg-red-700" },
-    warning: { icon: "bg-amber-50 text-amber-600", btn: "bg-amber-600 hover:bg-amber-700" },
-  };
-  const v = variants[variant] || variants.danger;
-
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
-        <div className={`w-12 h-12 rounded-xl ${v.icon} flex items-center justify-center mb-5`}>
-          <AlertTriangle className="w-6 h-6" strokeWidth={1.5} />
-        </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-500 mb-6">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-[var(--canvas)] rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 mx-4">
+        <h3 className="text-lg font-semibold text-[var(--ink)] mb-2">{title}</h3>
+        <p className="text-sm text-[var(--mute)] mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] transition-colors"
+          >
             Cancel
           </button>
-          <button onClick={onConfirm} className={`flex-1 py-2.5 ${v.btn} text-white rounded-xl text-sm font-semibold transition-colors`}>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[16px] hover:bg-[var(--primary-pressed)] transition-colors"
+          >
             {confirmText}
           </button>
         </div>

@@ -73,30 +73,30 @@ export default function AdminTenants() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">All Hospitals</h1>
-        <p className="text-gray-400 mt-1">{tenants.length} registered hospital{tenants.length !== 1 ? "s" : ""}.</p>
+        <h1 className="text-[28px] font-bold text-[var(--ink)]">All Hospitals</h1>
+        <p className="text-[var(--ash)] mt-1">{tenants.length} registered hospital{tenants.length !== 1 ? "s" : ""}.</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+      <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]  overflow-hidden divide-y divide-[var(--hairline)]">
         {tenants.map((t) => (
-          <div key={t.hospital_id} className="px-6 py-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+          <div key={t.hospital_id} className="px-6 py-5 flex items-center justify-between hover:bg-[var(--surface-card)] transition-colors">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[16px] bg-[var(--surface-card)] text-[var(--primary)] flex items-center justify-center">
                 <Building2 className="w-5 h-5" strokeWidth={1.5} />
               </div>
               <div>
-                <p className="font-bold text-gray-900">{t.name}</p>
-                <p className="text-xs text-gray-400 font-mono">Code: {t.invite_code} &middot; {t.max_users} users &middot; {t.max_scans_per_month} scans/mo</p>
+                <p className="font-bold text-[var(--ink)]">{t.name}</p>
+                <p className="text-xs text-[var(--ash)] font-mono">Code: {t.invite_code} &middot; {t.max_users} users &middot; {t.max_scans_per_month} scans/mo</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Active" : "Inactive"}</Badge>
               <Badge variant="info">{t.plan || "free"}</Badge>
-              <button onClick={() => openEdit(t)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+              <button onClick={() => openEdit(t)} className="p-2 text-[var(--ash)] hover:text-[var(--primary)] hover:bg-[var(--surface-card)] rounded-[16px] transition-colors" title="Edit">
                 <Pencil className="w-4 h-4" />
               </button>
               {t.is_active && (
-                <button onClick={() => setConfirmDeactivate(t.hospital_id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Deactivate">
+                <button onClick={() => setConfirmDeactivate(t.hospital_id)} className="p-2 text-[var(--ash)] hover:text-red-600 hover:bg-red-50 rounded-[16px] transition-colors" title="Deactivate">
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
@@ -109,12 +109,12 @@ export default function AdminTenants() {
       <Modal isOpen={!!editTenant} onClose={() => setEditTenant(null)} title={`Edit ${editTenant?.name || "Tenant"}`}>
         <form onSubmit={handleUpdate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Name</label>
-            <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400" />
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">Hospital Name</label>
+            <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-            <select value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 bg-white">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">Plan</label>
+            <select value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)] bg-[var(--canvas)]">
               <option value="free">Free</option>
               <option value="basic">Basic</option>
               <option value="pro">Pro</option>
@@ -123,17 +123,17 @@ export default function AdminTenants() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Users</label>
-              <input required type="number" min="1" value={editForm.max_users} onChange={(e) => setEditForm({ ...editForm, max_users: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400" />
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Max Users</label>
+              <input required type="number" min="1" value={editForm.max_users} onChange={(e) => setEditForm({ ...editForm, max_users: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Scans/Month</label>
-              <input required type="number" min="1" value={editForm.max_scans_per_month} onChange={(e) => setEditForm({ ...editForm, max_scans_per_month: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400" />
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Max Scans/Month</label>
+              <input required type="number" min="1" value={editForm.max_scans_per_month} onChange={(e) => setEditForm({ ...editForm, max_scans_per_month: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setEditTenant(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
+            <button type="button" onClick={() => setEditTenant(null)} className="flex-1 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm font-medium text-[var(--mute)] hover:bg-[var(--surface-card)] transition-colors">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-[var(--primary)] text-white rounded-[16px] text-sm font-semibold hover:bg-[var(--primary-pressed)] transition-colors disabled:opacity-50">
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>

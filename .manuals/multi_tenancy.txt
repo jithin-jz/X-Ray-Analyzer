@@ -1,0 +1,67 @@
+AI X-Ray Analyzer — Multi-Tenancy Architecture
+
+Model: Database-per-Tenant
+--------------------------
+Each hospital gets its own separate MongoDB database.
+
+    ai_xray_master (public)     → users, hospitals, audit_logs
+    tenant_<hospital_id>        → patients, scans
+
+This gives the strongest isolation possible in MongoDB:
+- Each hospital's data is in a completely separate namespace
+- Backups can be done per-hospital
+- Dropping a hospital's data = dropping one database
+- No risk of cross-tenant data leakage
+
+How It Works (per request)
+--------------------------
+1. User logs in → JWT contains hospital_id claim
+2. Request hits a protected route
+3. get_tenant_db dependency:
+   a. Extracts hospital_id from the authenticated user
+   b. Returns client["tenant_<hospital_id>"]
+4. Route uses tenant_db.patients / tenant_db.scans normally
+
+Key Files
+---------
+- core/database.py       → get_tenant_database(hospital_id)
+- core/dependencies.py   → get_tenant_db (the FastAPI dependency)
+- routes/auth/service.py → setup_tenant_database on hospital registration
+
+Provisioning
+------------
+When a hospital registers:
+1. Generate hospital_id (uuid4)
+2. Call setup_tenant_database(hospital_id):
+   - Creates "patients" collection with indexes
+   - Creates "scans" collection with indexes
+3. Insert hospital record into public DB
+4. Create admin user linked to hospital_id
+
+Collections per Tenant Database
+-------------------------------
+patients:
+  - patient_id (unique index)
+  - name, age, gender, contact, medical_history
+  - created_by, created_at
+
+scans:
+  - scan_id (unique index)
+  - patient_id (index)
+  - scan_type, status, image_path, ai_result, notes
+  - created_by, created_at (index)
+
+Shared Collections (public DB)
+------------------------------
+users:
+  - email (unique index)
+  - password, role, hospital_id, is_verified
+  - credential_id, public_key (for passkeys)
+
+hospitals:
+  - hospital_id (unique index)
+  - name, invite_code, plan, max_users, max_scans_per_month, is_active
+
+audit_logs:
+  - timestamp, method, path, status_code, latency_ms
+  - user_email, tenant_id, client_ip

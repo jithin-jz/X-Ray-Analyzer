@@ -30,16 +30,15 @@ function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            borderRadius: '12px',
-            background: '#1f2937',
-            color: '#f9fafb',
+            borderRadius: '16px',
+            background: '#262622',
+            color: '#ffffff',
             fontSize: '14px',
-            fontWeight: '500',
+            fontWeight: '600',
             padding: '12px 16px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
           },
-          success: { iconTheme: { primary: '#10b981', secondary: '#f9fafb' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#f9fafb' }, duration: 4000 },
+          success: { iconTheme: { primary: '#103c25', secondary: '#c7f0da' } },
+          error: { iconTheme: { primary: '#e60023', secondary: '#ffffff' }, duration: 4000 },
         }}
       />
       <AuthProvider>
