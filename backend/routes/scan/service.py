@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from core.exceptions import NotFoundException
 
 
@@ -23,7 +24,9 @@ async def create_scan(data: dict, user_email: str, db: AsyncIOMotorDatabase) -> 
     return doc
 
 
-async def list_scans(db: AsyncIOMotorDatabase, patient_id: str | None = None) -> list[dict]:
+async def list_scans(
+    db: AsyncIOMotorDatabase, patient_id: str | None = None
+) -> list[dict]:
     query = {"patient_id": patient_id} if patient_id else {}
     cursor = db.scans.find(query, {"_id": 0})
     return await cursor.to_list(5000)
@@ -36,14 +39,20 @@ async def get_scan(scan_id: str, db: AsyncIOMotorDatabase) -> dict:
     return scan
 
 
-async def update_scan_status(scan_id: str, status: str, db: AsyncIOMotorDatabase) -> dict:
-    result = await db.scans.update_one({"scan_id": scan_id}, {"$set": {"status": status}})
+async def update_scan_status(
+    scan_id: str, status: str, db: AsyncIOMotorDatabase
+) -> dict:
+    result = await db.scans.update_one(
+        {"scan_id": scan_id}, {"$set": {"status": status}}
+    )
     if result.matched_count == 0:
         raise NotFoundException("Scan")
     return await get_scan(scan_id, db)
 
 
-async def save_ai_result(scan_id: str, ai_result: dict, db: AsyncIOMotorDatabase) -> dict:
+async def save_ai_result(
+    scan_id: str, ai_result: dict, db: AsyncIOMotorDatabase
+) -> dict:
     result = await db.scans.update_one(
         {"scan_id": scan_id},
         {"$set": {"ai_result": ai_result, "status": "analyzed"}},

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Query
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.dependencies import get_tenant_db, require_doctor
 from routes.scan.schemas import ScanCreateSchema

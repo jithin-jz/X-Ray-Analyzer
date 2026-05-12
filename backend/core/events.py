@@ -3,7 +3,9 @@ Application lifecycle events (startup / shutdown).
 """
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
 from core.database import check_connection, master_db
 
 

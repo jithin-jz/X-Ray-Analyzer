@@ -4,7 +4,11 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from core.dependencies import get_tenant_db, require_doctor
 from routes.patient.schemas import PatientCreateSchema, PatientUpdateSchema
 from routes.patient.service import (
-    create_patient, delete_patient, get_patient, list_patients, update_patient,
+    create_patient,
+    delete_patient,
+    get_patient,
+    list_patients,
+    update_patient,
 )
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -43,7 +47,9 @@ async def update(
     user: dict = Depends(require_doctor),
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
-    return await update_patient(patient_id, data.model_dump(exclude_none=True), tenant_db)
+    return await update_patient(
+        patient_id, data.model_dump(exclude_none=True), tenant_db
+    )
 
 
 @router.delete("/{patient_id}")

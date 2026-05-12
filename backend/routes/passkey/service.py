@@ -10,10 +10,10 @@ from webauthn import (
 )
 from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
-from core.settings import settings
 from core.exceptions import BadRequestException, NotFoundException
 from core.redis_client import delete_challenge, get_challenge, set_challenge
 from core.security import create_access_token, create_refresh_token, hash_password
+from core.settings import settings
 
 RP_ID = settings.RP_ID
 RP_NAME = settings.RP_NAME
@@ -35,6 +35,7 @@ async def start_registration(email: str, db: AsyncIOMotorDatabase) -> dict:
     set_challenge(email, options.challenge)
 
     import json
+
     return json.loads(options_to_json(options))
 
 
@@ -96,12 +97,11 @@ async def start_login(email: str, db: AsyncIOMotorDatabase) -> dict:
     set_challenge(email, options.challenge)
 
     import json
+
     return json.loads(options_to_json(options))
 
 
-async def verify_login(
-    email: str, response: dict, db: AsyncIOMotorDatabase
-) -> dict:
+async def verify_login(email: str, response: dict, db: AsyncIOMotorDatabase) -> dict:
     user = await db.users.find_one({"email": email})
     if not user or not user.get("credential_id"):
         raise BadRequestException("No passkey found")
