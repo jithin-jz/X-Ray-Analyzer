@@ -52,58 +52,6 @@ AI X-Ray Analyzer enables hospitals to upload chest X-ray images and receive ins
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Docker & Docker Compose
-- Node.js 20+
-
-### Backend
-
-```bash
-cd backend
-docker compose up --build
-```
-
-- API: http://localhost:8000
-- Docs: http://localhost:8000/docs
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-- App: http://localhost:5173
-
----
-
-## Environment Configuration
-
-### Backend (`backend/.env`)
-
-```env
-DATABASE_URL=mongodb://root:example@mongodb:27017/
-DB_NAME=ai_xray_master
-JWT_SECRET_KEY=<your-secret>
-REDIS_URL=redis://redis:6379/0
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=<email>
-SMTP_PASSWORD=<app-password>
-```
-
-### Frontend (`frontend/.env`)
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
----
-
 ## Project Structure
 
 ```
@@ -141,24 +89,6 @@ VITE_API_BASE_URL=http://localhost:8000
 | **Doctor** | Manage patients, upload X-rays, trigger AI analysis |
 | **Hospital Admin** | All doctor capabilities + manage staff, view usage, configure hospital |
 | **Super Admin** | Platform-wide oversight — manage all hospitals and users |
-
----
-
-## API Documentation
-
-Interactive API documentation is available at `/docs` (Swagger UI) when the backend is running.
-
-Key endpoint groups:
-
-| Group | Prefix | Description |
-|-------|--------|-------------|
-| Auth | `/api/v1/auth` | Register, login, OTP, passkey, refresh |
-| Patients | `/api/v1/patients` | CRUD (tenant-scoped) |
-| Scans | `/api/v1/scans` | Upload, analyze, manage (tenant-scoped) |
-| AI | `/api/v1/ai` | Trigger analysis |
-| Tenants | `/api/v1/tenants` | Hospital management |
-| Users | `/api/v1/users` | User management |
-| Billing | `/api/v1/billing` | Usage statistics |
 
 ---
 
