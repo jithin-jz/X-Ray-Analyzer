@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from core.database import get_tenant_database
 from core.exceptions import PlanLimitExceededException
-
 
 PLANS = {
     "free": {"max_users": 5, "max_scans_per_month": 100, "price": 0},
@@ -24,7 +24,9 @@ async def get_usage(tenant_id: str, master_db: AsyncIOMotorDatabase) -> dict:
     tenant_db = get_tenant_database(tenant_id)
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    scan_count = await tenant_db.scans.count_documents({"created_at": {"$gte": month_start}})
+    scan_count = await tenant_db.scans.count_documents(
+        {"created_at": {"$gte": month_start}}
+    )
 
     return {
         "tenant_id": tenant_id,
@@ -47,6 +49,4 @@ async def check_scan_limit(tenant_id: str, master_db: AsyncIOMotorDatabase):
 async def check_user_limit(tenant_id: str, master_db: AsyncIOMotorDatabase):
     usage = await get_usage(tenant_id, master_db)
     if usage["current_users"] >= usage["max_users"]:
-        raise PlanLimitExceededException(
-            f"User limit ({usage['max_users']}) reached."
-        )
+        raise PlanLimitExceededException(f"User limit ({usage['max_users']}) reached.")

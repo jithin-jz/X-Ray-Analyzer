@@ -1,6 +1,7 @@
 """AI Analysis orchestrator."""
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from core.exceptions import BadRequestException
 from routes.scan.service import get_scan, save_ai_result
 

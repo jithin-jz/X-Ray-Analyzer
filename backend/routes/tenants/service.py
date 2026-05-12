@@ -1,6 +1,7 @@
 import uuid
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from core.exceptions import BadRequestException, NotFoundException
 
 
@@ -29,11 +30,15 @@ async def get_tenant(hospital_id: str, db: AsyncIOMotorDatabase) -> dict:
     return _serialize(hospital)
 
 
-async def update_tenant(hospital_id: str, updates: dict, db: AsyncIOMotorDatabase) -> dict:
+async def update_tenant(
+    hospital_id: str, updates: dict, db: AsyncIOMotorDatabase
+) -> dict:
     clean = {k: v for k, v in updates.items() if v is not None}
     if not clean:
         raise BadRequestException("No fields to update")
-    result = await db.hospitals.update_one({"hospital_id": hospital_id}, {"$set": clean})
+    result = await db.hospitals.update_one(
+        {"hospital_id": hospital_id}, {"$set": clean}
+    )
     if result.matched_count == 0:
         raise NotFoundException("Hospital")
     return await get_tenant(hospital_id, db)

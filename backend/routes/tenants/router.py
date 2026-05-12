@@ -5,8 +5,11 @@ from core.database import get_master_db
 from core.dependencies import get_current_user, require_admin, require_superadmin
 from routes.tenants.schemas import TenantUpdateSchema
 from routes.tenants.service import (
-    deactivate_tenant, get_tenant, list_all_tenants,
-    regenerate_invite_code, update_tenant,
+    deactivate_tenant,
+    get_tenant,
+    list_all_tenants,
+    regenerate_invite_code,
+    update_tenant,
 )
 
 router = APIRouter(prefix="/tenants", tags=["Tenant Management"])

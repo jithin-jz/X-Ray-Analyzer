@@ -8,7 +8,11 @@ import uuid
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.database import setup_tenant_database
-from core.exceptions import BadRequestException, ConflictException, NotAuthenticatedException
+from core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotAuthenticatedException,
+)
 from core.redis_client import delete_otp, get_otp, set_otp
 from core.security import (
     create_access_token,
@@ -51,15 +55,17 @@ async def register_user(
         await setup_tenant_database(hospital_id)
 
         # Register the hospital in the public database
-        await db.hospitals.insert_one({
-            "hospital_id": hospital_id,
-            "name": hospital_name,
-            "invite_code": invite,
-            "plan": "free",
-            "max_users": 5,
-            "max_scans_per_month": 100,
-            "is_active": True,
-        })
+        await db.hospitals.insert_one(
+            {
+                "hospital_id": hospital_id,
+                "name": hospital_name,
+                "invite_code": invite,
+                "plan": "free",
+                "max_users": 5,
+                "max_scans_per_month": 100,
+                "is_active": True,
+            }
+        )
         effective_role = "admin"
 
     elif role == "doctor":
@@ -74,19 +80,27 @@ async def register_user(
 
     # Create or update user
     if not existing:
-        await db.users.insert_one({
-            "email": email,
-            "password": hashed,
-            "is_verified": False,
-            "credential_id": None,
-            "public_key": None,
-            "role": effective_role,
-            "hospital_id": hospital_id,
-        })
+        await db.users.insert_one(
+            {
+                "email": email,
+                "password": hashed,
+                "is_verified": False,
+                "credential_id": None,
+                "public_key": None,
+                "role": effective_role,
+                "hospital_id": hospital_id,
+            }
+        )
     else:
         await db.users.update_one(
             {"email": email},
-            {"$set": {"password": hashed, "role": effective_role, "hospital_id": hospital_id}},
+            {
+                "$set": {
+                    "password": hashed,
+                    "role": effective_role,
+                    "hospital_id": hospital_id,
+                }
+            },
         )
 
     # Generate and store OTP
@@ -95,7 +109,9 @@ async def register_user(
     return otp_code
 
 
-async def verify_otp_and_activate(email: str, otp: str, db: AsyncIOMotorDatabase) -> dict:
+async def verify_otp_and_activate(
+    email: str, otp: str, db: AsyncIOMotorDatabase
+) -> dict:
     """Verify OTP, activate user, return tokens."""
     stored = get_otp(email)
     if not stored:
@@ -107,7 +123,11 @@ async def verify_otp_and_activate(email: str, otp: str, db: AsyncIOMotorDatabase
     user = await db.users.find_one({"email": email})
     delete_otp(email)
 
-    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
+    token_data = {
+        "sub": email,
+        "role": user.get("role"),
+        "hospital_id": user.get("hospital_id"),
+    }
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -127,7 +147,11 @@ async def login_user(email: str, password: str, db: AsyncIOMotorDatabase) -> dic
     if not user.get("is_verified"):
         raise BadRequestException("Account not verified. Register again to get OTP.")
 
-    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
+    token_data = {
+        "sub": email,
+        "role": user.get("role"),
+        "hospital_id": user.get("hospital_id"),
+    }
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -146,7 +170,11 @@ async def refresh_access_token(refresh_token: str, db: AsyncIOMotorDatabase) -> 
     if not user:
         raise NotAuthenticatedException("User not found")
 
-    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
+    token_data = {
+        "sub": email,
+        "role": user.get("role"),
+        "hospital_id": user.get("hospital_id"),
+    }
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),

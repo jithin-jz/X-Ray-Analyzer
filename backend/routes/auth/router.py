@@ -97,7 +97,9 @@ async def forgot_password(
         return {"message": "If the account exists, a reset link was sent."}
 
     reset_token = create_access_token({"sub": data.email, "type": "magic_link"})
-    background_tasks.add_task(send_magic_link_email, data.email, reset_token, data.origin)
+    background_tasks.add_task(
+        send_magic_link_email, data.email, reset_token, data.origin
+    )
     return {"message": "If the account exists, a reset link was sent."}
 
 

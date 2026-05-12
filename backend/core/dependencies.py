@@ -74,6 +74,7 @@ async def get_tenant_db(
 
 # ── Role guards ──────────────────────────────────────────────────────────────
 
+
 def require_role(*allowed_roles: str):
     """Dependency that checks the user has one of the allowed roles."""
 

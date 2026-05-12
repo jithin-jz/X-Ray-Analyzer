@@ -1,11 +1,17 @@
-import sys
 import asyncio
+import sys
+
 from motor.motor_asyncio import AsyncIOMotorClient
 
 
 async def main():
-    email = sys.argv[1] if len(sys.argv) > 1 else input("Enter user's email to make Super Admin: ")
+    email = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else input("Enter user's email to make Super Admin: ")
+    )
     from core.settings import settings
+
     client = AsyncIOMotorClient(settings.DATABASE_URL)
     db = client[settings.DB_NAME]
 

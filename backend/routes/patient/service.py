@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from core.exceptions import NotFoundException
 
 
@@ -33,7 +34,9 @@ async def get_patient(patient_id: str, db: AsyncIOMotorDatabase) -> dict:
     return patient
 
 
-async def update_patient(patient_id: str, updates: dict, db: AsyncIOMotorDatabase) -> dict:
+async def update_patient(
+    patient_id: str, updates: dict, db: AsyncIOMotorDatabase
+) -> dict:
     clean = {k: v for k, v in updates.items() if v is not None}
     if not clean:
         return await get_patient(patient_id, db)

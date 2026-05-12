@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.database import get_master_db
-from core.dependencies import get_current_user, require_admin, require_superadmin
-from routes.user.service import get_all_users, list_users_in_tenant, remove_user_from_tenant
+from core.dependencies import require_admin, require_superadmin
+from routes.user.service import (
+    get_all_users,
+    list_users_in_tenant,
+    remove_user_from_tenant,
+)
 
 router = APIRouter(prefix="/users", tags=["User Management"])
 

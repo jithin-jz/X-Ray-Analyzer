@@ -10,6 +10,7 @@ Architecture:
 """
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+
 from core.settings import settings
 
 # Connect to MongoDB

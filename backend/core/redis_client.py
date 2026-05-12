@@ -7,6 +7,7 @@ redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 # ── OTP ──────────────────────────────────────────────────────────────────────
 
+
 def set_otp(email: str, code: str, ttl: int = 600):
     """Store OTP in Redis with a TTL (default 10 mins)."""
     redis_client.setex(f"otp:{email}", ttl, code)
@@ -23,6 +24,7 @@ def delete_otp(email: str):
 
 
 # ── WebAuthn Challenges ─────────────────────────────────────────────────────
+
 
 def set_challenge(email: str, challenge: bytes, ttl: int = 300):
     """Store WebAuthn challenge in Redis (5 mins TTL)."""
@@ -42,6 +44,7 @@ def delete_challenge(email: str):
 
 # ── Token Blacklist ──────────────────────────────────────────────────────────
 
+
 def blacklist_token(jti: str, ttl: int = 86400):
     """Add a token ID to the blacklist (default 24h TTL)."""
     redis_client.setex(f"blacklist:{jti}", ttl, "1")
@@ -53,6 +56,7 @@ def is_token_blacklisted(jti: str) -> bool:
 
 
 # ── Rate Limiting ────────────────────────────────────────────────────────────
+
 
 def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> bool:
     """

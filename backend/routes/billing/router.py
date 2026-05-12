@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.database import get_master_db
-from core.dependencies import get_current_user, require_admin
+from core.dependencies import require_admin
 from routes.billing.service import get_usage
 
 router = APIRouter(prefix="/billing", tags=["Billing & Usage"])
