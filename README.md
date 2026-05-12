@@ -1,43 +1,63 @@
 # AI X-Ray Analyzer
 
-A multi-tenant SaaS platform for AI-powered chest X-ray diagnostics. Each hospital gets its own isolated database — zero data overlap between institutions.
+> Multi-tenant SaaS platform for AI-powered chest X-ray diagnostics. Each hospital operates in a fully isolated environment with its own database, staff, and patient records.
 
-## Features
+---
 
-- **Multi-tenant isolation** — database-per-hospital architecture
-- **AI analysis** — deep learning model with Grad-CAM visual explanations
-- **WebAuthn passkeys** — biometric login (FaceID/TouchID/fingerprint)
-- **Role-based access** — doctor, hospital admin, super admin
+## Overview
+
+AI X-Ray Analyzer enables hospitals to upload chest X-ray images and receive instant AI-driven diagnostic predictions with visual explanations (Grad-CAM heatmaps). The platform is built as a multi-tenant system where every hospital gets complete data isolation — separate databases, independent user management, and per-tenant usage controls.
+
+---
+
+## Key Features
+
+- **Database-per-tenant isolation** — each hospital's data lives in its own MongoDB instance
+- **AI-powered analysis** — deep learning model with Grad-CAM visual explanations
+- **WebAuthn passkey authentication** — biometric login (FaceID, TouchID, fingerprint)
+- **Role-based access control** — Doctor, Hospital Admin, Super Admin
 - **Invite-code onboarding** — admins generate codes, doctors join instantly
-- **Usage tracking** — scan limits, user seats, plan management
+- **Usage metering** — scan limits, user seats, and plan management per hospital
+- **Audit logging** — every authenticated request is logged with tenant context
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        MongoDB                                │
+├──────────────────────────────────────────────────────────────┤
+│  ai_xray_master (shared)    │  tenant_<id> (per hospital)    │
+│  ├── users                  │  ├── patients                  │
+│  ├── hospitals              │  └── scans                     │
+│  └── audit_logs             │                                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Request flow:** JWT → extract `hospital_id` → resolve `tenant_<hospital_id>` database → isolated data access.
+
+---
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | FastAPI, Python 3.11 |
-| Database | MongoDB (Motor async driver) |
-| Cache | Redis |
-| Auth | JWT + bcrypt + WebAuthn (FIDO2) + OTP |
-| Frontend | React 19, Vite 8, Tailwind CSS 4 |
-| Icons | Lucide React |
-| Deployment | Docker Compose |
+| API | FastAPI (Python 3.11) |
+| Database | MongoDB with Motor (async) |
+| Cache & Sessions | Redis |
+| Authentication | JWT + bcrypt + WebAuthn/FIDO2 + Email OTP |
+| Frontend | React 19, Vite, Tailwind CSS 4 |
+| Containerization | Docker Compose |
 
-## Architecture
+---
 
-```
-ai_xray_master (public DB)     →  users, hospitals, audit_logs
-tenant_<hospital_id> (per DB)  →  patients, scans
-```
-
-Each request: JWT → extract hospital_id → `client["tenant_<hospital_id>"]` → isolated data access.
-
-## Quick Start
+## Getting Started
 
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 18+
+- Node.js 20+
 
 ### Backend
 
@@ -46,8 +66,8 @@ cd backend
 docker compose up --build
 ```
 
-API runs at `http://localhost:8000`  
-Swagger docs at `http://localhost:8000/docs`
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
 
 ### Frontend
 
@@ -57,84 +77,97 @@ npm install
 npm run dev
 ```
 
-App runs at `http://localhost:5173`
+- App: http://localhost:5173
 
-## Project Structure
+---
 
-```
-├── backend/
-│   ├── core/           ← DB, auth, middleware, settings
-│   ├── routes/         ← API endpoints (auth, patients, scans, ai, etc.)
-│   ├── services/       ← Email service
-│   ├── scripts/        ← CLI tools (create_superadmin)
-│   ├── templates/      ← Email templates
-│   ├── main.py         ← App factory
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── frontend/
-│   ├── src/
-│   │   ├── api/        ← API client modules
-│   │   ├── components/ ← UI components + Sidebar/Navbar
-│   │   ├── context/    ← Auth state
-│   │   └── pages/      ← Landing, Auth, Dashboard pages
-│   ├── index.html
-│   └── package.json
-└── .manuals/           ← Project documentation
-```
-
-## User Roles
-
-| Role | Can do |
-|------|--------|
-| **Doctor** | Manage patients, upload X-rays, trigger AI analysis |
-| **Hospital Admin** | Everything a doctor can + manage staff, view usage, configure hospital |
-| **Super Admin** | Everything + manage all hospitals, view all users, platform stats |
-
-## Registration Flow
-
-1. Hospital admin registers → creates hospital + tenant database
-2. Admin gets an invite code
-3. Doctors register with the invite code → join the hospital
-4. Email OTP verification → account activated
-5. Optional: set up passkey for biometric login
-
-## Environment Variables
+## Environment Configuration
 
 ### Backend (`backend/.env`)
 
 ```env
 DATABASE_URL=mongodb://root:example@mongodb:27017/
 DB_NAME=ai_xray_master
+JWT_SECRET_KEY=<your-secret>
+REDIS_URL=redis://redis:6379/0
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-JWT_SECRET_KEY=your-secret-key
-REDIS_URL=redis://redis:6379/0
+SMTP_USER=<email>
+SMTP_PASSWORD=<app-password>
 ```
 
 ### Frontend (`frontend/.env`)
 
 ```env
-VITE_API_URL=http://localhost:8000/api/v1
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## Useful Commands
+---
 
-```bash
-# Create a super admin
-docker compose exec api python -m scripts.create_superadmin
+## Project Structure
 
-# Format code
-docker compose exec api black .
-
-# Lint
-docker compose exec api ruff check --fix .
-
-# Build frontend for production
-cd frontend && npm run build
 ```
+├── backend/
+│   ├── core/           Database, auth, middleware, config
+│   ├── routes/         API endpoints (domain-based modules)
+│   ├── services/       Shared services (email)
+│   ├── scripts/        CLI utilities
+│   ├── templates/      Email templates
+│   ├── main.py         Application factory
+│   ├── Dockerfile
+│   └── docker-compose.yml
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/        API client modules
+│   │   ├── components/ Reusable UI components
+│   │   ├── context/    Global state (auth)
+│   │   └── pages/      Route-level page components
+│   ├── index.html
+│   └── package.json
+│
+├── .github/            CI workflow + PR template
+├── .manuals/           Project documentation
+├── CONTRIBUTING.md     Team workflow guide
+└── LICENSE             MIT
+```
+
+---
+
+## User Roles
+
+| Role | Capabilities |
+|------|-------------|
+| **Doctor** | Manage patients, upload X-rays, trigger AI analysis |
+| **Hospital Admin** | All doctor capabilities + manage staff, view usage, configure hospital |
+| **Super Admin** | Platform-wide oversight — manage all hospitals and users |
+
+---
+
+## API Documentation
+
+Interactive API documentation is available at `/docs` (Swagger UI) when the backend is running.
+
+Key endpoint groups:
+
+| Group | Prefix | Description |
+|-------|--------|-------------|
+| Auth | `/api/v1/auth` | Register, login, OTP, passkey, refresh |
+| Patients | `/api/v1/patients` | CRUD (tenant-scoped) |
+| Scans | `/api/v1/scans` | Upload, analyze, manage (tenant-scoped) |
+| AI | `/api/v1/ai` | Trigger analysis |
+| Tenants | `/api/v1/tenants` | Hospital management |
+| Users | `/api/v1/users` | User management |
+| Billing | `/api/v1/billing` | Usage statistics |
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, and the pull request workflow.
+
+---
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
