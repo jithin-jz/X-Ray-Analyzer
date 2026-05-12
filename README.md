@@ -24,18 +24,34 @@ AI X-Ray Analyzer enables hospitals to upload chest X-ray images and receive ins
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        MongoDB                                │
-├──────────────────────────────────────────────────────────────┤
-│  ai_xray_master (shared)    │  tenant_<id> (per hospital)    │
-│  ├── users                  │  ├── patients                  │
-│  ├── hospitals              │  └── scans                     │
-│  └── audit_logs             │                                │
-└──────────────────────────────────────────────────────────────┘
-```
+```mermaid
+graph TD
+    User[Frontend: React 19 + Vite] --> API[FastAPI Backend]
 
-**Request flow:** JWT → extract `hospital_id` → resolve `tenant_<hospital_id>` database → isolated data access.
+    subgraph Backend [Backend Services]
+        API --> Auth[Auth Module]
+        API --> Patients[Patient Module]
+        API --> Scans[Scan Module]
+        API --> AIService[AI Analysis Module]
+        API --> RAG[RAG Pipeline]
+        API --> Billing[Billing Module]
+    end
+
+    subgraph Data [Persistence & Cache]
+        Auth --> MasterDB[(MongoDB: Master DB)]
+        Patients --> TenantDB[(MongoDB: Tenant DB)]
+        Scans --> TenantDB
+        AIService --> TenantDB
+        Auth --> Redis[(Redis)]
+        Billing --> MasterDB
+    end
+
+    subgraph Tenant Isolation
+        TenantDB --> H1[tenant_hospital_1]
+        TenantDB --> H2[tenant_hospital_2]
+        TenantDB --> H3[tenant_hospital_n]
+    end
+```
 
 ---
 
