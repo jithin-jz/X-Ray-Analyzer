@@ -1,51 +1,58 @@
-X-Ray Analyzer - Backend Architecture Overview
+X-Ray Analyzer - Backend Architecture
 
-This document provides a professional overview of the backend infrastructure for the X-Ray Analyzer project, primarily located within the 'backend/backend' directory.
+1. Tech Stack
+-------------
+- FastAPI + Motor (async MongoDB driver) + Redis
+- JWT auth + WebAuthn passkeys + OTP email verification
+- Docker Compose for local development
 
-1. Technology Stack
+2. Multi-Tenancy (Database-per-Tenant)
+--------------------------------------
+Simple and clean:
+
+    ai_xray_master (public)     → users, hospitals, audit_logs
+    tenant_<hospital_id>        → patients, scans
+
+Each hospital gets its own Mongo database. Full isolation.
+
+How it works per request:
+    1. User logs in → JWT contains hospital_id
+    2. Route calls get_tenant_db → returns client["tenant_<hospital_id>"]
+    3. Route uses tenant_db.patients / tenant_db.scans normally
+
+3. Folder Structure
 -------------------
-- Framework: FastAPI (Asynchronous, High-Performance Python Web Framework)
-- Database: MongoDB (NoSQL) with Motor (Async Driver)
-- Data Validation: Pydantic v2
-- Authentication:
-    - JWT (JSON Web Tokens) for session persistence
-    - WebAuthn/FIDO2 for Passkey support (biometric/hardware authentication)
-    - bcrypt for secure credential hashing
-- Configuration: Environment-based settings via Pydantic Settings
-- Templating: Jinja2 for responsive HTML email communication
-- Containerization: Docker and Docker Compose for consistent deployments
+backend/
+├── core/               ← Infrastructure (DB, auth, middleware)
+│   ├── database.py     ← Mongo connection + tenant DB helper
+│   ├── dependencies.py ← FastAPI dependencies (auth, tenant resolution)
+│   ├── events.py       ← Startup/shutdown lifecycle
+│   ├── exceptions.py   ← Custom HTTP exceptions
+│   ├── security.py     ← JWT + password hashing
+│   ├── redis_client.py ← OTP, challenges, rate-limit
+│   ├── settings.py     ← Environment config
+│   └── middleware/     ← Audit log, rate limiting
+├── routes/             ← API endpoints (one folder per domain)
+│   ├── auth/           ← Register, login, OTP, refresh
+│   ├── patient/        ← CRUD patients (tenant-scoped)
+│   ├── scan/           ← CRUD scans (tenant-scoped)
+│   ├── ai/             ← AI analysis trigger
+│   ├── rag/            ← RAG query pipeline
+│   ├── tenants/        ← Hospital management (superadmin)
+│   ├── user/           ← User management
+│   ├── billing/        ← Usage stats
+│   ├── admin/          ← Dashboard
+│   └── passkey/        ← WebAuthn flows
+├── services/           ← Shared services (email)
+├── templates/          ← Email templates
+├── scripts/            ← CLI tools (create_superadmin)
+├── main.py             ← App factory
+├── requirements.txt
+├── Dockerfile
+└── docker-compose.yml
 
-2. Directory Structure & Modular Design
----------------------------------------
-The backend follows a modular, feature-based architecture to ensure scalability and separation of concerns:
-
-- routes/: Interface Layer
-  Defines the API contract and handles HTTP request/response cycles. Each module (e.g., auth, passkey) is isolated in its own router.
-
-- models/: Persistence Layer
-  Defines the structure of documents within MongoDB and provides transformation utilities between database objects and Python dictionaries.
-
-- schemas/: Validation Layer
-  Leverages Pydantic models to enforce strict data types for API inputs and outputs, ensuring robust data integrity and automatic documentation.
-
-- services/: Logic Layer
-  Encapsulates the core business logic. By decoupling logic from routes, the application remains testable and maintainable.
-
-- utils/: Utility Layer
-  Shared helper functions for cross-cutting concerns such as email dispatch, security token generation, and formatting.
-
-- config.py: Configuration Management
-  Centralized management of application settings, secrets, and environment variables.
-
-- database.py: Connection Management
-  Handles the lifecycle of the asynchronous MongoDB client and database sessions.
-
-3. Functional Summary
----------------------
-The backend serves as the orchestration layer for:
-- Secure User Identity Management: Providing multi-factor authentication options.
-- Data Integrity: Validating all incoming diagnostic and user data.
-- AI Integration: Orchestrating the ingestion and analysis of medical imaging data.
-- Professional Communication: Automated dispatch of verification and notification emails.
-
-This architecture is designed for production reliability, security compliance, and ease of future extension.
+4. Running
+----------
+    docker compose up --build
+    # API at http://localhost:8000
+    # Docs at http://localhost:8000/docs

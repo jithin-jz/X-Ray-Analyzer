@@ -1,8 +1,13 @@
+"""
+Authentication business logic — register, login, OTP, refresh.
+"""
+
 import random
 import uuid
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from core.database import setup_tenant_database
 from core.exceptions import BadRequestException, ConflictException, NotAuthenticatedException
 from core.redis_client import delete_otp, get_otp, set_otp
 from core.security import (
@@ -23,36 +28,42 @@ async def register_user(
     db: AsyncIOMotorDatabase,
 ) -> str:
     """
-    Registers a new user (hospital admin or doctor).
-    Returns the generated OTP code for the caller to send via email.
+    Register a new user (hospital admin or doctor).
+    Returns the OTP code to send via email.
     """
-    user = await db.users.find_one({"email": email})
-    if user and user.get("is_verified"):
-        raise ConflictException("User already exists with this email. Please login.")
+    existing = await db.users.find_one({"email": email})
+    if existing and existing.get("is_verified"):
+        raise ConflictException("User already exists. Please login.")
 
     hashed = hash_password(password)
     hospital_id = None
     effective_role = role
 
     if role == "hospital":
+        # New hospital registration
         if not hospital_name:
             raise BadRequestException("Hospital name is required.")
+
         hospital_id = str(uuid.uuid4())
-        code = str(uuid.uuid4())[:8].upper()
-        await db.hospitals.insert_one(
-            {
-                "hospital_id": hospital_id,
-                "name": hospital_name,
-                "invite_code": code,
-                "plan": "free",
-                "max_users": 5,
-                "max_scans_per_month": 100,
-                "is_active": True,
-            }
-        )
+        invite = str(uuid.uuid4())[:8].upper()
+
+        # Create the hospital's own database with collections + indexes
+        await setup_tenant_database(hospital_id)
+
+        # Register the hospital in the public database
+        await db.hospitals.insert_one({
+            "hospital_id": hospital_id,
+            "name": hospital_name,
+            "invite_code": invite,
+            "plan": "free",
+            "max_users": 5,
+            "max_scans_per_month": 100,
+            "is_active": True,
+        })
         effective_role = "admin"
 
     elif role == "doctor":
+        # Doctor joining an existing hospital
         if not invite_code:
             raise BadRequestException("Invite code is required.")
         hospital = await db.hospitals.find_one({"invite_code": invite_code})
@@ -61,35 +72,31 @@ async def register_user(
         hospital_id = hospital["hospital_id"]
         effective_role = "doctor"
 
-    if not user:
-        await db.users.insert_one(
-            {
-                "email": email,
-                "password": hashed,
-                "is_verified": False,
-                "credential_id": None,
-                "public_key": None,
-                "role": effective_role,
-                "hospital_id": hospital_id,
-            }
-        )
+    # Create or update user
+    if not existing:
+        await db.users.insert_one({
+            "email": email,
+            "password": hashed,
+            "is_verified": False,
+            "credential_id": None,
+            "public_key": None,
+            "role": effective_role,
+            "hospital_id": hospital_id,
+        })
     else:
         await db.users.update_one(
             {"email": email},
             {"$set": {"password": hashed, "role": effective_role, "hospital_id": hospital_id}},
         )
 
+    # Generate and store OTP
     otp_code = str(random.randint(100000, 999999))
     set_otp(email, otp_code)
     return otp_code
 
 
-async def verify_otp_and_activate(
-    email: str, otp: str, db: AsyncIOMotorDatabase
-) -> dict:
-    """
-    Verifies OTP, activates user, returns token pair + metadata.
-    """
+async def verify_otp_and_activate(email: str, otp: str, db: AsyncIOMotorDatabase) -> dict:
+    """Verify OTP, activate user, return tokens."""
     stored = get_otp(email)
     if not stored:
         raise BadRequestException("OTP expired or invalid")
@@ -100,11 +107,7 @@ async def verify_otp_and_activate(
     user = await db.users.find_one({"email": email})
     delete_otp(email)
 
-    token_data = {
-        "sub": email,
-        "role": user.get("role"),
-        "hospital_id": user.get("hospital_id"),
-    }
+    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -113,26 +116,18 @@ async def verify_otp_and_activate(
 
 
 async def login_user(email: str, password: str, db: AsyncIOMotorDatabase) -> dict:
-    """
-    Password-based login. Returns token pair.
-    """
+    """Password-based login."""
     user = await db.users.find_one({"email": email})
 
     if not user or not verify_password(password, user["password"]):
         if user and user.get("credential_id"):
-            raise NotAuthenticatedException(
-                "Account locked to Passkey. Click 'Sign In with Passkey' below."
-            )
+            raise NotAuthenticatedException("Account uses Passkey only.")
         raise NotAuthenticatedException("Invalid credentials")
 
-    if not user.get("is_verified", False):
-        raise BadRequestException("Account not verified. Register again to receive OTP.")
+    if not user.get("is_verified"):
+        raise BadRequestException("Account not verified. Register again to get OTP.")
 
-    token_data = {
-        "sub": email,
-        "role": user.get("role"),
-        "hospital_id": user.get("hospital_id"),
-    }
+    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -141,9 +136,7 @@ async def login_user(email: str, password: str, db: AsyncIOMotorDatabase) -> dic
 
 
 async def refresh_access_token(refresh_token: str, db: AsyncIOMotorDatabase) -> dict:
-    """
-    Validates a refresh token and returns a new access token.
-    """
+    """Issue new tokens from a valid refresh token."""
     payload = verify_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise NotAuthenticatedException("Invalid refresh token")
@@ -153,11 +146,7 @@ async def refresh_access_token(refresh_token: str, db: AsyncIOMotorDatabase) -> 
     if not user:
         raise NotAuthenticatedException("User not found")
 
-    token_data = {
-        "sub": email,
-        "role": user.get("role"),
-        "hospital_id": user.get("hospital_id"),
-    }
+    token_data = {"sub": email, "role": user.get("role"), "hospital_id": user.get("hospital_id")}
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
@@ -165,7 +154,7 @@ async def refresh_access_token(refresh_token: str, db: AsyncIOMotorDatabase) -> 
 
 
 async def get_user_profile(user: dict, db: AsyncIOMotorDatabase) -> dict:
-    """Returns the current user's profile with hospital info."""
+    """Get current user's profile with hospital info."""
     response = {
         "email": user["email"],
         "role": user["role"],

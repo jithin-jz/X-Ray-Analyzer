@@ -1,16 +1,53 @@
-# React + Vite
+# AI X-Ray Analyzer — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA for the AI X-Ray Analyzer platform.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + Vite 8
+- Tailwind CSS 4
+- React Router DOM 7
+- Framer Motion
+- Lucide React (icons)
+- @simplewebauthn/browser (passkey auth)
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Runs at `http://localhost:5173`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Build
+
+```bash
+npm run build
+```
+
+Output in `dist/` — deploy to any static host (Vercel, Netlify, S3).
+
+## Design System
+
+Pinterest-inspired warm cream palette:
+
+- **Primary (red):** `#e60023` — CTAs only
+- **Surface:** `#fbfbf9` (bg), `#f6f6f3` (cards), `#ffffff` (nav/modals)
+- **Text:** `#000000` (ink), `#62625b` (mute), `#91918c` (ash)
+- **Radii:** 16px (cards/buttons), 32px (modals), pill (chips/search)
+- **Font:** Inter (400/500/600/700)
+- **No shadows on cards** — flat with hairline borders
+
+## Responsive
+
+- **Mobile (< 768px):** bottom tab bar + hamburger drawer
+- **Desktop (≥ 768px):** fixed sidebar + spacious content
+
+## Environment
+
+Create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:8000/api/v1
+```

@@ -4,12 +4,7 @@ from typing import Optional
 
 from core.dependencies import get_tenant_db, require_doctor
 from routes.scan.schemas import ScanCreateSchema
-from routes.scan.service import (
-    create_scan,
-    delete_scan,
-    get_scan,
-    list_scans,
-)
+from routes.scan.service import create_scan, delete_scan, get_scan, list_scans
 
 router = APIRouter(prefix="/scans", tags=["Scans"])
 
@@ -48,11 +43,8 @@ async def upload_image(
     user: dict = Depends(require_doctor),
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
-    # TODO: Implement file storage (local/S3/MinIO)
-    # For now, just update the scan with a placeholder path
     tenant_id = user["tenant_id"]
     image_path = f"uploads/{tenant_id}/{scan_id}/{file.filename}"
-
     await tenant_db.scans.update_one(
         {"scan_id": scan_id},
         {"$set": {"image_path": image_path, "status": "uploaded"}},

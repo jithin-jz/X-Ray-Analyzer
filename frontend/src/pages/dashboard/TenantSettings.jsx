@@ -44,57 +44,57 @@ export default function TenantSettings() {
   if (loading) return <div className="flex items-center justify-center py-32"><LoadingSpinner size="lg" text="Loading hospital settings..." /></div>;
 
   if (!tenant || tenant.detail) {
-    return <div className="text-center py-20 text-gray-400">No hospital associated with your account.</div>;
+    return <div className="text-center py-20 text-[var(--ash)]">No hospital associated with your account.</div>;
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Hospital Settings</h1>
-        <p className="text-gray-400 mt-1">Manage your hospital configuration.</p>
+        <h1 className="text-[28px] font-bold text-[var(--ink)]">Hospital Settings</h1>
+        <p className="text-[var(--ash)] mt-1">Manage your hospital configuration.</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm space-y-8">
+      <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px] p-8  space-y-8">
         {/* Name & ID */}
         <div className="flex items-center gap-6">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-[16px] bg-[var(--surface-card)] text-[var(--primary)] flex items-center justify-center">
             <Building2 className="w-8 h-8" strokeWidth={1.5} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{tenant.name}</h2>
-            <p className="text-xs text-gray-400 font-mono">ID: {tenant.hospital_id}</p>
+            <h2 className="text-2xl font-bold text-[var(--ink)]">{tenant.name}</h2>
+            <p className="text-xs text-[var(--ash)] font-mono">ID: {tenant.hospital_id}</p>
           </div>
         </div>
 
         {/* Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="bg-gray-50 rounded-xl p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Plan</p>
-            <p className="text-lg font-bold text-gray-900">{tenant.plan?.toUpperCase()}</p>
+          <div className="bg-[var(--surface-card)] rounded-[16px] p-5">
+            <p className="text-xs font-bold text-[var(--ash)] uppercase tracking-widest mb-1">Plan</p>
+            <p className="text-lg font-bold text-[var(--ink)]">{tenant.plan?.toUpperCase()}</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+          <div className="bg-[var(--surface-card)] rounded-[16px] p-5">
+            <p className="text-xs font-bold text-[var(--ash)] uppercase tracking-widest mb-1">Status</p>
             <Badge variant={tenant.is_active ? "success" : "danger"}>{tenant.is_active ? "Active" : "Inactive"}</Badge>
           </div>
-          <div className="bg-gray-50 rounded-xl p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Max Users</p>
-            <p className="text-lg font-bold text-gray-900">{tenant.max_users}</p>
+          <div className="bg-[var(--surface-card)] rounded-[16px] p-5">
+            <p className="text-xs font-bold text-[var(--ash)] uppercase tracking-widest mb-1">Max Users</p>
+            <p className="text-lg font-bold text-[var(--ink)]">{tenant.max_users}</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Max Scans/Month</p>
-            <p className="text-lg font-bold text-gray-900">{tenant.max_scans_per_month?.toLocaleString()}</p>
+          <div className="bg-[var(--surface-card)] rounded-[16px] p-5">
+            <p className="text-xs font-bold text-[var(--ash)] uppercase tracking-widest mb-1">Max Scans/Month</p>
+            <p className="text-lg font-bold text-[var(--ink)]">{tenant.max_scans_per_month?.toLocaleString()}</p>
           </div>
         </div>
 
         {/* Invite Code */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Invite Code</p>
+        <div className="bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] p-6">
+          <p className="text-xs font-bold text-[var(--primary)] uppercase tracking-widest mb-3">Invite Code</p>
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-mono font-bold text-blue-700 bg-white px-5 py-2 rounded-xl border border-blue-100 tracking-widest">{tenant.invite_code}</span>
-            <button onClick={() => { navigator.clipboard.writeText(tenant.invite_code); toast.success("Copied to clipboard"); }} className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors" title="Copy">
+            <span className="text-2xl font-mono font-bold text-[var(--ink)] bg-[var(--canvas)] px-5 py-2 rounded-[16px] border border-[var(--hairline)] tracking-widest">{tenant.invite_code}</span>
+            <button onClick={() => { navigator.clipboard.writeText(tenant.invite_code); toast.success("Copied to clipboard"); }} className="p-2 bg-blue-100 hover:bg-blue-200 text-[var(--primary)] rounded-[16px] transition-colors" title="Copy">
               <Copy className="w-4 h-4" />
             </button>
-            <button onClick={() => setShowRegenConfirm(true)} disabled={regenerating} className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors disabled:opacity-50" title="Regenerate">
+            <button onClick={() => setShowRegenConfirm(true)} disabled={regenerating} className="p-2 bg-blue-100 hover:bg-blue-200 text-[var(--primary)] rounded-[16px] transition-colors disabled:opacity-50" title="Regenerate">
               <RefreshCw className={`w-4 h-4 ${regenerating ? "animate-spin" : ""}`} />
             </button>
           </div>

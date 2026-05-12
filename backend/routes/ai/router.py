@@ -15,5 +15,4 @@ async def analyze(
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
     """Trigger AI analysis for a scan."""
-    result = await analyze_scan(data.scan_id, tenant_db)
-    return result
+    return await analyze_scan(data.scan_id, tenant_db)

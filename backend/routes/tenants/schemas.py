@@ -18,9 +18,3 @@ class TenantUpdateSchema(BaseModel):
     max_users: Optional[int] = None
     max_scans_per_month: Optional[int] = None
     is_active: Optional[bool] = None
-
-
-class TenantSettingsSchema(BaseModel):
-    logo_url: Optional[str] = None
-    timezone: str = "UTC"
-    dicom_enabled: bool = False

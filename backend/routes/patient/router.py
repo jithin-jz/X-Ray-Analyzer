@@ -1,14 +1,10 @@
 from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from core.dependencies import get_current_user, get_tenant_db, require_doctor
+from core.dependencies import get_tenant_db, require_doctor
 from routes.patient.schemas import PatientCreateSchema, PatientUpdateSchema
 from routes.patient.service import (
-    create_patient,
-    delete_patient,
-    get_patient,
-    list_patients,
-    update_patient,
+    create_patient, delete_patient, get_patient, list_patients, update_patient,
 )
 
 router = APIRouter(prefix="/patients", tags=["Patients"])

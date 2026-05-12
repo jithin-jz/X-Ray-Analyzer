@@ -27,20 +27,20 @@ export default function AllUsers() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">All Platform Users</h1>
-        <p className="text-gray-400 mt-1">{users.length} user{users.length !== 1 ? "s" : ""} across all tenants.</p>
+        <h1 className="text-[28px] font-bold text-[var(--ink)]">All Platform Users</h1>
+        <p className="text-[var(--ash)] mt-1">{users.length} user{users.length !== 1 ? "s" : ""} across all tenants.</p>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+      <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]  overflow-hidden divide-y divide-[var(--hairline)]">
         {users.map((u) => (
-          <div key={u.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+          <div key={u.id} className="px-6 py-4 flex items-center justify-between hover:bg-[var(--surface-card)] transition-colors">
             <div className="flex items-center gap-4">
-              <div className="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-full bg-[var(--surface-card)] text-[var(--ash)] flex items-center justify-center font-bold text-xs">
                 {u.email?.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">{u.email}</p>
-                <p className="text-xs text-gray-400 font-mono">{u.hospital_id ? `Tenant: ${u.hospital_id?.slice(0, 8)}` : "No tenant"}</p>
+                <p className="font-semibold text-[var(--ink)] text-sm">{u.email}</p>
+                <p className="text-xs text-[var(--ash)] font-mono">{u.hospital_id ? `Tenant: ${u.hospital_id?.slice(0, 8)}` : "No tenant"}</p>
               </div>
             </div>
             <div className="flex gap-2">
