@@ -28,6 +28,9 @@
   --secondary-bg: #e5e5e0;
   --secondary-pressed: #c8c8c1;
   --hairline: #dadad3;
+  --hairline-soft: #e5e5e0;
+  --surface-dark: #262622;
+  --on-dark: #ffffff;
 
   /* Semantic */
   --error: #9e0a0a;
