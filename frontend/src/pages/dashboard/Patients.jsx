@@ -20,7 +20,7 @@ export default function Patients() {
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const load = async () => { try { setPatients(await listPatients()); } catch {} finally { setLoading(false); } };
+  const load = async () => { try { setPatients(await listPatients()); } catch { /* ignore */ } finally { setLoading(false); } };
   useEffect(() => { load(); }, []);
 
   const handleCreate = async (e) => {
