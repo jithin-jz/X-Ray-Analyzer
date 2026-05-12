@@ -98,16 +98,6 @@ graph TD
 
 ---
 
-## User Roles
-
-| Role | Capabilities |
-|------|-------------|
-| **Doctor** | Manage patients, upload X-rays, trigger AI analysis |
-| **Hospital Admin** | All doctor capabilities + manage staff, view usage, configure hospital |
-| **Super Admin** | Platform-wide oversight — manage all hospitals and users |
-
----
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, and the pull request workflow.
