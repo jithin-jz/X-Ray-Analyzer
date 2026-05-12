@@ -57,14 +57,12 @@ graph TD
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| API | FastAPI (Python 3.11) |
-| Database | MongoDB with Motor (async) |
-| Cache & Sessions | Redis |
-| Authentication | JWT + bcrypt + WebAuthn/FIDO2 + Email OTP |
-| Frontend | React 19, Vite, Tailwind CSS 4 |
-| Containerization | Docker Compose |
+- **Backend:** FastAPI (Python 3.11)
+- **Database:** MongoDB with Motor (async driver)
+- **Cache:** Redis
+- **Auth:** JWT + bcrypt + WebAuthn/FIDO2 + Email OTP
+- **Frontend:** React 19, Vite, Tailwind CSS 4
+- **Containerization:** Docker Compose
 
 ---
 
