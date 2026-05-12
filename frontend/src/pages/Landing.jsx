@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ShieldCheck, Database, Zap, Brain, Upload, Users, Activity, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
+import { ShieldCheck, Database, Zap, Brain, Users, Activity } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -76,9 +76,9 @@ export default function Landing() {
             How it works
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <StepCard step="1" icon={<Upload className="w-4 h-4" />} title="Upload X-Ray" description="Doctor uploads a chest X-ray image to the patient's record." />
-            <StepCard step="2" icon={<Brain className="w-4 h-4" />} title="AI Analyzes" description="Deep learning model processes the image and generates Grad-CAM heatmap." />
-            <StepCard step="3" icon={<CheckCircle className="w-4 h-4" />} title="Get Results" description="Prediction with confidence score and visual explanation in seconds." />
+            <StepCard step="1" title="Upload X-Ray" description="Doctor uploads a chest X-ray image to the patient's record." />
+            <StepCard step="2" title="AI Analyzes" description="Deep learning model processes the image and generates Grad-CAM heatmap." />
+            <StepCard step="3" title="Get Results" description="Prediction with confidence score and visual explanation in seconds." />
           </div>
         </div>
       </section>
@@ -129,7 +129,7 @@ export default function Landing() {
   );
 }
 
-function StepCard({ step, icon, title, description }) {
+function StepCard({ step, title, description }) {
   return (
     <div className="flex items-start gap-3 p-3.5 sm:p-5 bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]">
       <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 bg-[var(--primary)] rounded-full flex items-center justify-center text-[var(--on-primary)] text-[11px] sm:text-xs font-bold">

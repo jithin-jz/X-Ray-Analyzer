@@ -40,7 +40,7 @@ export default function PatientDetail() {
     }
   };
 
-  useEffect(() => { load(); }, [patientId]);
+  useEffect(() => { load(); }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = () => {
     setEditForm({

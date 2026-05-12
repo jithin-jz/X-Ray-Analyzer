@@ -32,7 +32,7 @@ export default function ScanDetail() {
     }
   };
 
-  useEffect(() => { load(); }, [scanId]);
+  useEffect(() => { load(); }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];

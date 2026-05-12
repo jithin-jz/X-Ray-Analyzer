@@ -8,7 +8,7 @@ export default function Billing() {
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { (async () => { try { setUsage(await getUsage()); } catch {} finally { setLoading(false); } })(); }, []);
+  useEffect(() => { (async () => { try { setUsage(await getUsage()); } catch { /* ignore */ } finally { setLoading(false); } })(); }, []);
 
   if (loading) return <div className="flex items-center justify-center py-32"><LoadingSpinner text="Loading usage..." /></div>;
   if (!usage) return <div className="text-center py-20 text-[var(--mute)]">Unable to load usage data.</div>;

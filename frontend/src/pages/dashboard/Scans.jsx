@@ -29,7 +29,7 @@ export default function Scans() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const fileRef = useRef(null);
 
-  const load = async () => { try { const [s, p] = await Promise.all([listScans(), listPatients()]); setScans(s); setPatients(p); } catch {} finally { setLoading(false); } };
+  const load = async () => { try { const [s, p] = await Promise.all([listScans(), listPatients()]); setScans(s); setPatients(p); } catch { /* ignore */ } finally { setLoading(false); } };
   useEffect(() => { load(); }, []);
 
   const handleCreate = async (e) => {

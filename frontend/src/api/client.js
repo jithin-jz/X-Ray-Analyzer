@@ -75,9 +75,9 @@ export async function apiFetch(path, options = {}) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const newToken = await refreshAccessToken();
+        await refreshAccessToken();
         isRefreshing = false;
-        processQueue(null, newToken);
+        processQueue(null, getAccessToken());
       } catch (err) {
         isRefreshing = false;
         processQueue(err);
@@ -85,7 +85,7 @@ export async function apiFetch(path, options = {}) {
       }
     } else {
       // Queue this request until refresh completes
-      const newToken = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         refreshQueue.push({ resolve, reject });
       });
     }
