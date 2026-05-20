@@ -7,6 +7,7 @@ from routes.tenants.schemas import TenantUpdateSchema
 from routes.tenants.service import (
     deactivate_tenant,
     get_tenant,
+    get_tenant_by_subdomain,
     list_all_tenants,
     regenerate_invite_code,
     update_tenant,
@@ -31,6 +32,18 @@ async def get_my_tenant(
     if not user.get("tenant_id"):
         return {"detail": "No tenant associated"}
     return await get_tenant(user["tenant_id"], db)
+
+
+@router.get("/by-subdomain/{subdomain}")
+async def lookup_by_subdomain(
+    subdomain: str,
+    db: AsyncIOMotorDatabase = Depends(get_master_db),
+):
+    """
+    Public — used by the SPA on a tenant subdomain to confirm the tenant
+    exists before showing its login page. Returns a non-sensitive subset.
+    """
+    return await get_tenant_by_subdomain(subdomain, db)
 
 
 @router.get("/{hospital_id}")
@@ -58,6 +71,13 @@ async def regenerate_invite(
     user: dict = Depends(require_admin),
     db: AsyncIOMotorDatabase = Depends(get_master_db),
 ):
+    # IDOR guard: non-superadmin can only regenerate their own hospital's code
+    if user["role"] != "superadmin" and user.get("tenant_id") != hospital_id:
+        from core.exceptions import ForbiddenException
+
+        raise ForbiddenException(
+            "You can only regenerate your own hospital's invite code"
+        )
     new_code = await regenerate_invite_code(hospital_id, db)
     return {"invite_code": new_code}
 
