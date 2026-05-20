@@ -6,11 +6,23 @@ from pydantic import BaseModel
 class TenantOut(BaseModel):
     hospital_id: str
     name: str
-    invite_code: str
+    subdomain: Optional[str] = None
+    tenant_url: Optional[str] = None
+    invite_code: Optional[str] = None
     plan: str = "free"
     max_users: int = 5
     max_scans_per_month: int = 100
     is_active: bool = True
+
+
+class TenantPublicOut(BaseModel):
+    """Safe-to-expose subset for the public subdomain lookup endpoint."""
+
+    hospital_id: str
+    name: str
+    subdomain: str
+    tenant_url: str
+    is_active: bool
 
 
 class TenantUpdateSchema(BaseModel):

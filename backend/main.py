@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.events import lifespan
 from core.middleware.audit_log import AuditLogMiddleware
 from core.middleware.rate_limit import RateLimitMiddleware
+from core.middleware.tenant_resolver import TenantResolverMiddleware
 from core.settings import settings
 from routes.admin.router import router as admin_router
 from routes.ai.router import router as ai_router
@@ -27,15 +28,22 @@ def create_app() -> FastAPI:
     )
 
     # ── Middleware (order matters: last added = first executed) ───────────
+    # CORS — accept the configured origin AND any tenant subdomain of BASE_DOMAIN.
+    base = settings.BASE_DOMAIN.replace(".", r"\.")
+    tenant_origin_regex = rf"^https?://([a-z0-9-]+\.)?{base}(:\d+)?$"
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.ORIGIN],
+        allow_origin_regex=tenant_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(AuditLogMiddleware)
+    # Resolves <slug>.{BASE_DOMAIN} → request.state.tenant. Added LAST so it
+    # runs FIRST and the audit log + rate limiter see the tenant context.
+    app.add_middleware(TenantResolverMiddleware)
 
     # ── API v1 Routers ──────────────────────────────────────────────────
     api_prefix = f"/api/{settings.API_VERSION}"
