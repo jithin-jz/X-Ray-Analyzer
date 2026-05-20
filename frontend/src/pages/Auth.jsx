@@ -8,7 +8,16 @@ import { Fingerprint, Mail, Lock, Database, Zap, ShieldCheck, ChevronLeft, Globe
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
-import { buildTenantUrl, getCurrentSubdomain } from "../lib/subdomain";
+import { buildTenantUrl, isTrustedTenantUrl } from "../lib/subdomain";
+
+/** Safely redirect to a tenant URL only if it's under our domain. */
+function safeTenantRedirect(url, path = "/dashboard") {
+  if (url && isTrustedTenantUrl(url)) {
+    window.location.href = url.replace(/\/$/, "") + path;
+    return true;
+  }
+  return false;
+}
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -52,12 +61,7 @@ export default function Auth() {
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, res.has_passkey);
         toast.success("Welcome back!");
-        // Redirect to tenant subdomain if available
-        if (res.tenant_url) {
-          window.location.href = `${res.tenant_url}/dashboard`;
-        } else {
-          navigate("/dashboard");
-        }
+        if (!safeTenantRedirect(res.tenant_url)) navigate("/dashboard");
       } else setError(res.detail || "Invalid credentials");
     } catch (err) { setError(err.message || "Login failed"); }
     finally { setIsLoading(false); }
@@ -66,15 +70,18 @@ export default function Auth() {
   const handlePasskeyLogin = async () => {
     setError("");
     if (!email) { setError("Enter your email first."); return; }
+    setIsLoading(true);
     try {
       const options = await startPasskeyLogin(email);
       const credential = await startAuthentication({ optionsJSON: options });
       const res = await verifyPasskeyLogin(email, credential);
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, true);
-        toast.success("Biometric login successful"); navigate("/dashboard");
+        toast.success("Biometric login successful");
+        if (!safeTenantRedirect(res.tenant_url)) navigate("/dashboard");
       } else setError(res.detail || "Passkey login failed.");
     } catch { setError("Passkey login cancelled or failed."); }
+    finally { setIsLoading(false); }
   };
 
   const handleForgotPassword = async (e) => {
@@ -89,6 +96,9 @@ export default function Auth() {
   // ── Register ──
   const handleRegister = async (e) => {
     e.preventDefault(); setError(""); setIsLoading(true);
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters."); setIsLoading(false); return;
+    }
     try {
       const payload = { email, password, role };
       if (role === "hospital") payload.hospital_name = hospitalName;
@@ -106,7 +116,7 @@ export default function Auth() {
   };
 
   const handleVerifyOtp = async (e) => {
-    e.preventDefault(); setError("");
+    e.preventDefault(); setError(""); setIsLoading(true);
     try {
       const res = await verifyOtp(email, otp);
       if (res.access_token) {
@@ -116,10 +126,11 @@ export default function Auth() {
         toast.success("Verified!"); setRegStep("passkey_prompt");
       } else setError(res.detail || "Invalid OTP");
     } catch { setError("OTP verification failed."); }
+    finally { setIsLoading(false); }
   };
 
   const handleRegisterPasskey = async () => {
-    setError("");
+    setError(""); setIsLoading(true);
     try {
       const options = await startPasskeyRegister(email);
       const credential = await startRegistration({ optionsJSON: options });
@@ -127,28 +138,28 @@ export default function Auth() {
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, true);
         toast.success("Passkey registered!");
-        if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`;
-        else navigate("/dashboard");
+        if (!safeTenantRedirect(tenantUrl)) navigate("/dashboard");
       } else setError(res.detail || "Passkey setup failed");
     } catch {
       toast("Skipped passkey setup.", { icon: "👋" });
       setTimeout(() => {
-        if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`;
-        else navigate("/dashboard");
+        if (!safeTenantRedirect(tenantUrl)) navigate("/dashboard");
       }, 1500);
     }
+    finally { setIsLoading(false); }
+  };
+
+  const handleSkipPasskey = () => {
+    if (!safeTenantRedirect(tenantUrl)) navigate("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col items-center justify-center px-4 py-6 sm:py-12">
-      {/* Logo */}
       <Link to="/" className="mb-5 sm:mb-8 text-[15px] sm:text-lg font-bold text-[var(--ink)] tracking-tight">
         AI X-Ray Analyzer
       </Link>
 
-      {/* Card — on mobile it's borderless full-width, on desktop it's a card */}
       <div className="w-full max-w-[400px] sm:bg-[var(--canvas)] sm:border sm:border-[var(--hairline)] sm:rounded-[32px] sm:p-8 p-0">
-        {/* Title */}
         <h2 className="text-[20px] sm:text-[22px] font-semibold text-[var(--ink)] text-center mb-1.5 sm:mb-2">
           {isLoginMode ? (isForgotMode ? "Reset password" : "Welcome back") : "Create account"}
         </h2>
@@ -159,23 +170,22 @@ export default function Auth() {
           }
         </p>
 
-        {/* Errors / Messages */}
-        {error && <div className="mb-4 p-3 rounded-[16px] bg-red-50 text-[var(--error)] text-sm text-center">{error}</div>}
-        {message && <div className="mb-4 p-3 rounded-[16px] bg-[var(--success-pale)] text-[var(--success)] text-sm text-center">{message}</div>}
+        {error && <div role="alert" className="mb-4 p-3 rounded-[16px] bg-red-50 text-[var(--error)] text-sm text-center">{error}</div>}
+        {message && <div role="status" className="mb-4 p-3 rounded-[16px] bg-[var(--success-pale)] text-[var(--success)] text-sm text-center">{message}</div>}
 
         {/* ── LOGIN ── */}
         {isLoginMode && !isForgotMode && (
           <>
             <form onSubmit={handleLogin} className="space-y-3">
-              <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-              <Input icon={<Lock />} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+              <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" aria-label="Email address" />
+              <Input icon={<Lock />} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" aria-label="Password" />
               <div className="text-right">
                 <button type="button" onClick={() => setIsForgotMode(true)} className="text-xs font-semibold text-[var(--mute)] hover:text-[var(--ink)]">Forgot password?</button>
               </div>
               <PrimaryButton loading={isLoading}>Sign in</PrimaryButton>
             </form>
             <Divider label="or" />
-            <SecondaryButton onClick={handlePasskeyLogin} icon={<Fingerprint className="w-4 h-4" />}>
+            <SecondaryButton onClick={handlePasskeyLogin} icon={<Fingerprint className="w-4 h-4" />} disabled={isLoading}>
               Sign in with Passkey
             </SecondaryButton>
           </>
@@ -184,7 +194,7 @@ export default function Auth() {
         {/* ── FORGOT ── */}
         {isLoginMode && isForgotMode && (
           <form onSubmit={handleForgotPassword} className="space-y-3">
-            <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+            <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" aria-label="Email address" />
             <PrimaryButton>Send recovery link</PrimaryButton>
             <button type="button" onClick={() => setIsForgotMode(false)} className="w-full text-sm text-[var(--mute)] hover:text-[var(--ink)] mt-2">Back to sign in</button>
           </form>
@@ -193,14 +203,14 @@ export default function Auth() {
         {/* ── REGISTER ── */}
         {!isLoginMode && regStep === "register" && (
           <form onSubmit={handleRegister} className="space-y-3">
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2 mb-2" role="group" aria-label="Account type">
               <RoleTab active={role === "doctor"} onClick={() => setRole("doctor")}>Doctor</RoleTab>
               <RoleTab active={role === "hospital"} onClick={() => setRole("hospital")}>Hospital Admin</RoleTab>
             </div>
-            {role === "hospital" && <Input icon={<Database />} placeholder="Hospital name" value={hospitalName} onChange={e => setHospitalName(e.target.value)} />}
-            {role === "doctor" && <Input icon={<Zap />} placeholder="Invite code" value={inviteCode} onChange={e => setInviteCode(e.target.value)} />}
-            <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-            <Input icon={<Lock />} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+            {role === "hospital" && <Input icon={<Database />} placeholder="Hospital name" value={hospitalName} onChange={e => setHospitalName(e.target.value)} aria-label="Hospital name" maxLength={120} />}
+            {role === "doctor" && <Input icon={<Zap />} placeholder="Invite code" value={inviteCode} onChange={e => setInviteCode(e.target.value)} aria-label="Invite code" />}
+            <Input icon={<Mail />} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" aria-label="Email address" />
+            <Input icon={<Lock />} type="password" placeholder="Password (min 8 characters)" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" aria-label="Password" minLength={8} />
             <PrimaryButton loading={isLoading}>Create account</PrimaryButton>
           </form>
         )}
@@ -210,9 +220,12 @@ export default function Auth() {
             <p className="text-sm text-[var(--mute)] text-center">Enter the 6-digit code sent to your email.</p>
             <input
               className="w-full text-center text-2xl tracking-[0.4em] font-mono bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] px-4 py-3 focus:outline-none focus:border-[var(--ink)]"
-              placeholder="000000" maxLength={6} value={otp} onChange={e => setOtp(e.target.value)}
+              placeholder="000000" maxLength={6} value={otp}
+              onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code"
+              aria-label="Verification code"
             />
-            <PrimaryButton>Verify</PrimaryButton>
+            <PrimaryButton loading={isLoading}>Verify</PrimaryButton>
             <button type="button" onClick={() => setRegStep("register")} className="w-full text-sm text-[var(--mute)] hover:text-[var(--ink)] flex items-center justify-center gap-1">
               <ChevronLeft className="w-3 h-3" /> Back
             </button>
@@ -221,7 +234,6 @@ export default function Auth() {
 
         {!isLoginMode && regStep === "passkey_prompt" && (
           <div className="text-center space-y-4">
-            {/* Show assigned subdomain */}
             {subdomain && (
               <div className="p-4 bg-[var(--success-pale)] rounded-[16px] text-left">
                 <div className="flex items-center gap-2 mb-1">
@@ -230,7 +242,7 @@ export default function Auth() {
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="text-sm font-mono font-bold text-[var(--ink)]">{tenantUrl || buildTenantUrl(subdomain)}</code>
-                  <button type="button" onClick={() => { navigator.clipboard.writeText(tenantUrl || buildTenantUrl(subdomain)); toast.success("Copied!"); }} className="p-1 hover:bg-white/50 rounded">
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(tenantUrl || buildTenantUrl(subdomain)); toast.success("Copied!"); }} className="p-1 hover:bg-white/50 rounded" aria-label="Copy portal URL">
                     <Copy className="w-3.5 h-3.5 text-[var(--mute)]" />
                   </button>
                 </div>
@@ -241,12 +253,11 @@ export default function Auth() {
               <h3 className="text-base font-semibold text-[var(--ink)] mb-1">Set up Passkey</h3>
               <p className="text-sm text-[var(--mute)]">Enable biometric login for faster, passwordless access.</p>
             </div>
-            <PrimaryButton onClick={handleRegisterPasskey} icon={<Fingerprint className="w-4 h-4" />}>Setup Passkey</PrimaryButton>
-            <SecondaryButton onClick={() => { if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`; else navigate("/dashboard"); }}>Skip for now</SecondaryButton>
+            <PrimaryButton onClick={handleRegisterPasskey} icon={<Fingerprint className="w-4 h-4" />} loading={isLoading}>Setup Passkey</PrimaryButton>
+            <SecondaryButton onClick={handleSkipPasskey} disabled={isLoading}>Skip for now</SecondaryButton>
           </div>
         )}
 
-        {/* Toggle */}
         <div className="mt-6 text-center">
           <span className="text-sm text-[var(--mute)]">
             {isLoginMode ? "New here? " : "Already a member? "}
@@ -265,7 +276,7 @@ export default function Auth() {
 function Input({ icon, ...props }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ash)] w-4 h-4">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ash)] w-4 h-4" aria-hidden="true">
         {icon}
       </span>
       <input
@@ -277,12 +288,12 @@ function Input({ icon, ...props }) {
   );
 }
 
-function PrimaryButton({ children, loading, icon, onClick, type = "submit" }) {
+function PrimaryButton({ children, loading, icon, onClick, type = "submit", disabled }) {
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
       className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[16px] hover:bg-[var(--primary-pressed)] disabled:opacity-60 transition-colors"
     >
       {icon}{loading ? "Loading..." : children}
@@ -290,12 +301,13 @@ function PrimaryButton({ children, loading, icon, onClick, type = "submit" }) {
   );
 }
 
-function SecondaryButton({ children, icon, onClick }) {
+function SecondaryButton({ children, icon, onClick, disabled }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] transition-colors"
+      disabled={disabled}
+      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] disabled:opacity-60 transition-colors"
     >
       {icon}{children}
     </button>

@@ -1,7 +1,8 @@
+import { getCurrentSubdomain } from "../lib/subdomain";
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_URL = `${API_BASE}/api/v1`;
-
-import { getCurrentSubdomain } from "../lib/subdomain";
+const REQUEST_TIMEOUT_MS = 30000;
 
 // ── Token helpers ───────────────────────────────────────────────────────────
 
@@ -65,9 +66,7 @@ export async function apiFetch(path, options = {}) {
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // If we're served on a tenant subdomain, forward it to the API so the
-  // backend can resolve the tenant even when the API runs on a different
-  // origin (e.g. api.domain.com, or http://localhost:8000 in dev).
+  // Forward tenant subdomain to API for resolution
   const sub = getCurrentSubdomain();
   if (sub && !headers["X-Tenant-Subdomain"]) {
     headers["X-Tenant-Subdomain"] = sub;
@@ -78,7 +77,25 @@ export async function apiFetch(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  let res = await fetch(`${API_URL}${path}`, { ...fetchOpts, headers });
+  // Add timeout via AbortController
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...fetchOpts,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === "AbortError") {
+      throw new Error("Request timed out");
+    }
+    throw err;
+  }
+  clearTimeout(timeout);
 
   // If 401 and we have a refresh token, try refreshing
   if (res.status === 401 && auth && getRefreshToken()) {
@@ -94,7 +111,6 @@ export async function apiFetch(path, options = {}) {
         throw err;
       }
     } else {
-      // Queue this request until refresh completes
       await new Promise((resolve, reject) => {
         refreshQueue.push({ resolve, reject });
       });
@@ -109,7 +125,9 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(err.detail || err.message || "Request failed");
+    const error = new Error(err.detail || err.message || "Request failed");
+    error.status = res.status;
+    throw error;
   }
 
   return res.json();
