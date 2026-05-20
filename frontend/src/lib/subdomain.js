@@ -1,11 +1,8 @@
 /**
  * Multi-tenant subdomain helpers.
  *
- * In dev:  abc.localhost:5173                → subdomain = "abc"
- * In prod: abc.domain.com                    → subdomain = "abc"
- *
- * The apex (no subdomain) renders the marketing/landing page and the
- * neutral signup flow. A tenant subdomain renders the tenant's login page.
+ * In dev:  abc.localhost:5173  → subdomain = "abc"
+ * In prod: abc.domain.com     → subdomain = "abc"
  */
 
 const BASE_DOMAIN = (import.meta.env.VITE_BASE_DOMAIN || "localhost")
@@ -26,7 +23,7 @@ export function getBaseDomain() {
 
 /**
  * Parse the current window's hostname and return the tenant subdomain,
- * or null if we're on the apex / a reserved label / not under BASE_DOMAIN.
+ * or null if on the apex / reserved / not under BASE_DOMAIN.
  */
 export function getCurrentSubdomain() {
   if (typeof window === "undefined") return null;
@@ -47,16 +44,30 @@ export function parseSubdomain(hostname) {
 }
 
 /**
- * Build a fully-qualified tenant URL.
- * e.g. buildTenantUrl("abc") → "http://abc.localhost:5173" in dev
+ * Build a fully-qualified tenant URL. Returns "" if subdomain is invalid.
  */
 export function buildTenantUrl(subdomain, path = "/") {
-  if (!subdomain) return path;
+  if (!subdomain || !SUBDOMAIN_RE.test(subdomain)) return "";
+  if (typeof window === "undefined") return "";
   const { protocol, port } = window.location;
   const host = port
     ? `${subdomain}.${BASE_DOMAIN}:${port}`
     : `${subdomain}.${BASE_DOMAIN}`;
   return `${protocol}//${host}${path}`;
+}
+
+/**
+ * Validate that a URL is under our BASE_DOMAIN (prevents open redirect).
+ */
+export function isTrustedTenantUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    return host === BASE_DOMAIN || host.endsWith(`.${BASE_DOMAIN}`);
+  } catch {
+    return false;
+  }
 }
 
 /** Are we on a tenant subdomain right now? */

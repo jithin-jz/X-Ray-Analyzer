@@ -2,10 +2,12 @@
 Authentication business logic — register, login, OTP, refresh.
 """
 
-import random
+import logging
+import secrets
 import uuid
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo import ReturnDocument
 
 from core.database import setup_tenant_database
 from core.exceptions import (
@@ -13,7 +15,7 @@ from core.exceptions import (
     ConflictException,
     NotAuthenticatedException,
 )
-from core.redis_client import delete_otp, get_otp, set_otp
+from core.redis_client import delete_otp, get_otp, set_otp, check_rate_limit
 from core.security import (
     create_access_token,
     create_refresh_token,
@@ -23,23 +25,29 @@ from core.security import (
 )
 from core.tenancy import build_tenant_url, is_reserved, slugify
 
-# Subdomain generation
+logger = logging.getLogger(__name__)
+
 _FALLBACK_SLUG = "hospital"
 _MAX_SUFFIX_TRIES = 50
+_OTP_MAX_ATTEMPTS = 5
+_OTP_ATTEMPT_WINDOW = 600  # 10 minutes
+
+
+def _generate_otp() -> str:
+    """Generate a cryptographically secure 6-digit OTP."""
+    return str(secrets.randbelow(900000) + 100000)
 
 
 async def _generate_unique_subdomain(
     hospital_name: str, db: AsyncIOMotorDatabase
 ) -> str:
     """
-    Derive a DNS-safe slug from `hospital_name`, append a numeric suffix until
-    it is globally unique across the hospitals collection and not reserved.
+    Derive a DNS-safe slug from hospital_name, ensure uniqueness.
+    Uses the unique index on hospitals.subdomain as the final guard.
     """
     base = slugify(hospital_name) or _FALLBACK_SLUG
-
-    # Fall back if the slug ended up empty or reserved
-    if not base or is_reserved(base):
-        base = f"{_FALLBACK_SLUG}-{uuid.uuid4().hex[:6]}"
+    if is_reserved(base):
+        base = f"{_FALLBACK_SLUG}-{secrets.token_hex(3)}"
 
     candidate = base
     for n in range(2, _MAX_SUFFIX_TRIES + 2):
@@ -48,8 +56,7 @@ async def _generate_unique_subdomain(
             return candidate
         candidate = f"{base}-{n}"
 
-    # Extremely unlikely fallback: append a short uuid
-    return f"{base}-{uuid.uuid4().hex[:6]}"
+    return f"{base}-{secrets.token_hex(3)}"
 
 
 async def register_user(
@@ -60,11 +67,7 @@ async def register_user(
     invite_code: str | None,
     db: AsyncIOMotorDatabase,
 ) -> dict:
-    """
-    Register a new user (hospital admin or doctor).
-    Returns a dict with the OTP code (to email) plus tenant info if a new
-    hospital was created.
-    """
+    """Register a new user. Returns dict with otp_code + tenant info."""
     existing = await db.users.find_one({"email": email})
     if existing and existing.get("is_verified"):
         raise ConflictException("User already exists. Please login.")
@@ -76,7 +79,6 @@ async def register_user(
     effective_role = role
 
     if role == "hospital":
-        # New hospital registration
         if not hospital_name:
             raise BadRequestException("Hospital name is required.")
 
@@ -85,14 +87,12 @@ async def register_user(
         subdomain = await _generate_unique_subdomain(hospital_name, db)
         tenant_url = build_tenant_url(subdomain)
 
-        # Create the hospital's own database with collections + indexes
         await setup_tenant_database(hospital_id)
 
-        # Register the hospital in the public database
         await db.hospitals.insert_one(
             {
                 "hospital_id": hospital_id,
-                "name": hospital_name,
+                "name": hospital_name.strip(),
                 "subdomain": subdomain,
                 "invite_code": invite,
                 "plan": "free",
@@ -104,10 +104,9 @@ async def register_user(
         effective_role = "admin"
 
     elif role == "doctor":
-        # Doctor joining an existing hospital
         if not invite_code:
             raise BadRequestException("Invite code is required.")
-        hospital = await db.hospitals.find_one({"invite_code": invite_code})
+        hospital = await db.hospitals.find_one({"invite_code": invite_code.strip()})
         if not hospital:
             raise BadRequestException("Invalid invite code.")
         hospital_id = hospital["hospital_id"]
@@ -116,33 +115,25 @@ async def register_user(
             tenant_url = build_tenant_url(subdomain)
         effective_role = "doctor"
 
-    # Create or update user
+    # Upsert user (handles race condition on concurrent registration)
+    user_doc = {
+        "email": email,
+        "password": hashed,
+        "is_verified": False,
+        "credential_id": None,
+        "public_key": None,
+        "role": effective_role,
+        "hospital_id": hospital_id,
+    }
     if not existing:
-        await db.users.insert_one(
-            {
-                "email": email,
-                "password": hashed,
-                "is_verified": False,
-                "credential_id": None,
-                "public_key": None,
-                "role": effective_role,
-                "hospital_id": hospital_id,
-            }
-        )
+        await db.users.insert_one(user_doc)
     else:
         await db.users.update_one(
             {"email": email},
-            {
-                "$set": {
-                    "password": hashed,
-                    "role": effective_role,
-                    "hospital_id": hospital_id,
-                }
-            },
+            {"$set": {"password": hashed, "role": effective_role, "hospital_id": hospital_id}},
         )
 
-    # Generate and store OTP
-    otp_code = str(random.randint(100000, 999999))
+    otp_code = _generate_otp()
     set_otp(email, otp_code)
 
     return {
@@ -157,17 +148,28 @@ async def verify_otp_and_activate(
     email: str, otp: str, db: AsyncIOMotorDatabase
 ) -> dict:
     """Verify OTP, activate user, return tokens."""
+    # Rate-limit OTP attempts to prevent brute force
+    rate_key = f"otp_attempt:{email}"
+    if not check_rate_limit(rate_key, _OTP_MAX_ATTEMPTS, _OTP_ATTEMPT_WINDOW):
+        raise BadRequestException("Too many attempts. Please request a new OTP.")
+
     stored = get_otp(email)
     if not stored:
         raise BadRequestException("OTP expired or invalid")
-    if stored != otp:
+    if not secrets.compare_digest(stored, otp):
         raise BadRequestException("Incorrect OTP")
 
-    await db.users.update_one({"email": email}, {"$set": {"is_verified": True}})
-    user = await db.users.find_one({"email": email})
+    # Atomic update + fetch
+    user = await db.users.find_one_and_update(
+        {"email": email},
+        {"$set": {"is_verified": True}},
+        return_document=ReturnDocument.AFTER,
+    )
+    if not user:
+        raise BadRequestException("User not found")
+
     delete_otp(email)
 
-    # Look up tenant subdomain for redirect after verification.
     subdomain = None
     tenant_url = None
     hospital_id = user.get("hospital_id")
@@ -194,12 +196,16 @@ async def verify_otp_and_activate(
 
 async def login_user(email: str, password: str, db: AsyncIOMotorDatabase) -> dict:
     """Password-based login."""
+    # Rate-limit login attempts per email
+    rate_key = f"login_attempt:{email}"
+    if not check_rate_limit(rate_key, 10, 300):
+        raise NotAuthenticatedException("Too many login attempts. Try again later.")
+
     user = await db.users.find_one({"email": email})
 
+    # Uniform error message to prevent user enumeration
     if not user or not verify_password(password, user["password"]):
-        if user and user.get("credential_id"):
-            raise NotAuthenticatedException("Account uses Passkey only.")
-        raise NotAuthenticatedException("Invalid credentials")
+        raise NotAuthenticatedException("Invalid email or password")
 
     if not user.get("is_verified"):
         raise BadRequestException("Account not verified. Register again to get OTP.")

@@ -1,31 +1,29 @@
 """
 Tenant resolver middleware.
 
-Reads the Host header (or X-Tenant-Subdomain override for SPA dev),
-resolves it to a hospital, and attaches tenant context to request.state.
-
-Downstream code can do:
-
-    sub = getattr(request.state, "subdomain", None)
-    tenant = getattr(request.state, "tenant", None)  # full hospital doc or None
-    tenant_id = getattr(request.state, "tenant_id", None)
-
-This middleware NEVER blocks a request — it only annotates. Authorization is
-still enforced by the JWT-based dependencies in core/dependencies.py.
+Resolves Host header → tenant context on request.state.
+Never blocks requests — only annotates for downstream use.
 """
+
+import logging
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
 from core.database import master_db
+from core.redis_client import redis_client
+from core.settings import settings
 from core.tenancy import extract_subdomain, is_valid_subdomain
+
+logger = logging.getLogger(__name__)
+
+_CACHE_TTL = 60  # seconds
 
 
 class TenantResolverMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {"/docs", "/redoc", "/openapi.json", "/health"}
 
     async def dispatch(self, request: Request, call_next):
-        # Initialise to None so downstream code can rely on the attribute.
         request.state.subdomain = None
         request.state.tenant = None
         request.state.tenant_id = None
@@ -33,24 +31,63 @@ class TenantResolverMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.SKIP_PATHS:
             return await call_next(request)
 
-        # 1. Try the Host header (production / real subdomains)
+        # 1. Extract subdomain from Host header
         host = request.headers.get("host")
         sub = extract_subdomain(host)
 
-        # 2. Fall back to X-Tenant-Subdomain header (SPA dev convenience)
-        if not sub:
+        # 2. X-Tenant-Subdomain override — only in DEBUG mode (dev convenience)
+        if not sub and settings.DEBUG:
             override = request.headers.get("x-tenant-subdomain", "").strip().lower()
             if override and is_valid_subdomain(override):
                 sub = override
 
         if sub:
             request.state.subdomain = sub
-            try:
-                hospital = await master_db.hospitals.find_one({"subdomain": sub})
-            except Exception:
-                hospital = None
+            hospital = await self._resolve_tenant(sub)
             if hospital:
                 request.state.tenant = hospital
                 request.state.tenant_id = hospital.get("hospital_id")
 
         return await call_next(request)
+
+    async def _resolve_tenant(self, subdomain: str) -> dict | None:
+        """Look up tenant with Redis cache to avoid per-request DB hits."""
+        cache_key = f"tenant_sub:{subdomain}"
+
+        # Try cache first
+        try:
+            cached = redis_client.get(cache_key)
+            if cached == "__none__":
+                return None
+            if cached:
+                import json
+                return json.loads(cached)
+        except Exception:
+            pass  # Cache miss or Redis down — fall through to DB
+
+        # DB lookup
+        try:
+            hospital = await master_db.hospitals.find_one({"subdomain": subdomain})
+        except Exception as e:
+            logger.error("Tenant lookup failed for subdomain=%s: %s", subdomain, e)
+            return None
+
+        # Cache result
+        try:
+            import json
+            if hospital:
+                # Only cache safe fields
+                cacheable = {
+                    "hospital_id": hospital.get("hospital_id"),
+                    "name": hospital.get("name"),
+                    "subdomain": hospital.get("subdomain"),
+                    "is_active": hospital.get("is_active", True),
+                }
+                redis_client.setex(cache_key, _CACHE_TTL, json.dumps(cacheable))
+                return cacheable
+            else:
+                redis_client.setex(cache_key, _CACHE_TTL, "__none__")
+        except Exception:
+            pass
+
+        return hospital if hospital else None
