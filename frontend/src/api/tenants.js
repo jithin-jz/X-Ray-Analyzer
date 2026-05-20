@@ -6,6 +6,12 @@ export const getMyTenant = () => apiFetch("/tenants/mine");
 
 export const getTenant = (hospitalId) => apiFetch(`/tenants/${hospitalId}`);
 
+/** Public — look up a tenant by its subdomain slug (no auth required). */
+export const getTenantBySubdomain = (subdomain) =>
+  apiFetch(`/tenants/by-subdomain/${encodeURIComponent(subdomain)}`, {
+    auth: false,
+  });
+
 export const updateTenant = (hospitalId, data) =>
   apiFetch(`/tenants/${hospitalId}`, {
     method: "PATCH",

@@ -45,6 +45,7 @@ Tenant Management
 -----------------
 GET    /tenants/                         Superadmin: list all hospitals
 GET    /tenants/mine                     Get my hospital info
+GET    /tenants/by-subdomain/{subdomain} Public: lookup tenant by subdomain slug
 GET    /tenants/{hospital_id}            Superadmin: get hospital
 PATCH  /tenants/{hospital_id}            Superadmin: update hospital
 POST   /tenants/{hospital_id}/regenerate-invite  Admin: new invite code

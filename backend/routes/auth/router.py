@@ -29,7 +29,7 @@ async def register(
     background_tasks: BackgroundTasks,
     db: AsyncIOMotorDatabase = Depends(get_master_db),
 ):
-    otp_code = await register_user(
+    result = await register_user(
         email=data.email,
         password=data.password,
         role=data.role,
@@ -37,8 +37,12 @@ async def register(
         invite_code=data.invite_code,
         db=db,
     )
-    background_tasks.add_task(send_otp_email, data.email, otp_code)
-    return {"message": "OTP sent to email. Pending verification."}
+    background_tasks.add_task(send_otp_email, data.email, result["otp_code"])
+    return {
+        "message": "OTP sent to email. Pending verification.",
+        "subdomain": result["subdomain"],
+        "tenant_url": result["tenant_url"],
+    }
 
 
 @router.post("/verify-otp")
@@ -52,6 +56,8 @@ async def verify_otp(
         "access_token": result["access_token"],
         "refresh_token": result["refresh_token"],
         "has_passkey": result["has_passkey"],
+        "subdomain": result.get("subdomain"),
+        "tenant_url": result.get("tenant_url"),
     }
 
 
@@ -66,6 +72,8 @@ async def login(
         "access_token": result["access_token"],
         "refresh_token": result["refresh_token"],
         "has_passkey": result["has_passkey"],
+        "subdomain": result.get("subdomain"),
+        "tenant_url": result.get("tenant_url"),
     }
 
 
