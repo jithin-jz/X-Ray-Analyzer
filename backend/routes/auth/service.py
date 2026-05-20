@@ -15,7 +15,7 @@ from core.exceptions import (
     ConflictException,
     NotAuthenticatedException,
 )
-from core.redis_client import delete_otp, get_otp, set_otp, check_rate_limit
+from core.redis_client import check_rate_limit, delete_otp, get_otp, set_otp
 from core.security import (
     create_access_token,
     create_refresh_token,
@@ -130,7 +130,13 @@ async def register_user(
     else:
         await db.users.update_one(
             {"email": email},
-            {"$set": {"password": hashed, "role": effective_role, "hospital_id": hospital_id}},
+            {
+                "$set": {
+                    "password": hashed,
+                    "role": effective_role,
+                    "hospital_id": hospital_id,
+                }
+            },
         )
 
     otp_code = _generate_otp()
