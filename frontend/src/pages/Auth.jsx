@@ -4,10 +4,11 @@ import {
   registerUser, verifyOtp, startPasskeyRegister, verifyPasskeyRegister
 } from "../api/auth";
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
-import { Fingerprint, Mail, Lock, Database, Zap, ShieldCheck, ChevronLeft } from "lucide-react";
+import { Fingerprint, Mail, Lock, Database, Zap, ShieldCheck, ChevronLeft, Globe, Copy } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import { buildTenantUrl, getCurrentSubdomain } from "../lib/subdomain";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export default function Auth() {
   const [role, setRole] = useState("doctor");
   const [hospitalName, setHospitalName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+  const [tenantUrl, setTenantUrl] = useState("");
+  const [subdomain, setSubdomain] = useState("");
 
   useEffect(() => {
     if (isAuthenticated) navigate("/dashboard", { replace: true });
@@ -48,7 +51,13 @@ export default function Auth() {
       const res = await loginUser({ email, password });
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, res.has_passkey);
-        toast.success("Welcome back!"); navigate("/dashboard");
+        toast.success("Welcome back!");
+        // Redirect to tenant subdomain if available
+        if (res.tenant_url) {
+          window.location.href = `${res.tenant_url}/dashboard`;
+        } else {
+          navigate("/dashboard");
+        }
       } else setError(res.detail || "Invalid credentials");
     } catch (err) { setError(err.message || "Login failed"); }
     finally { setIsLoading(false); }
@@ -85,7 +94,12 @@ export default function Auth() {
       if (role === "hospital") payload.hospital_name = hospitalName;
       if (role === "doctor") payload.invite_code = inviteCode;
       const res = await registerUser(payload);
-      if (res.message?.includes("OTP")) { toast.success("Code sent!"); setRegStep("otp"); }
+      if (res.message?.includes("OTP")) {
+        toast.success("Code sent!");
+        if (res.subdomain) setSubdomain(res.subdomain);
+        if (res.tenant_url) setTenantUrl(res.tenant_url);
+        setRegStep("otp");
+      }
       else setError(res.detail || "Registration error");
     } catch (err) { setError(err.message || "Registration failed"); }
     finally { setIsLoading(false); }
@@ -97,6 +111,8 @@ export default function Auth() {
       const res = await verifyOtp(email, otp);
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, res.has_passkey);
+        if (res.tenant_url) setTenantUrl(res.tenant_url);
+        if (res.subdomain) setSubdomain(res.subdomain);
         toast.success("Verified!"); setRegStep("passkey_prompt");
       } else setError(res.detail || "Invalid OTP");
     } catch { setError("OTP verification failed."); }
@@ -110,11 +126,16 @@ export default function Auth() {
       const res = await verifyPasskeyRegister(email, credential);
       if (res.access_token) {
         await login(res.access_token, res.refresh_token, true);
-        toast.success("Passkey registered!"); navigate("/dashboard");
+        toast.success("Passkey registered!");
+        if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`;
+        else navigate("/dashboard");
       } else setError(res.detail || "Passkey setup failed");
     } catch {
       toast("Skipped passkey setup.", { icon: "👋" });
-      setTimeout(() => navigate("/dashboard"), 1500);
+      setTimeout(() => {
+        if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`;
+        else navigate("/dashboard");
+      }, 1500);
     }
   };
 
@@ -200,13 +221,28 @@ export default function Auth() {
 
         {!isLoginMode && regStep === "passkey_prompt" && (
           <div className="text-center space-y-4">
+            {/* Show assigned subdomain */}
+            {subdomain && (
+              <div className="p-4 bg-[var(--success-pale)] rounded-[16px] text-left">
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe className="w-4 h-4 text-[var(--success)]" />
+                  <span className="text-xs font-bold text-[var(--success)] uppercase tracking-wider">Your Portal</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="text-sm font-mono font-bold text-[var(--ink)]">{tenantUrl || buildTenantUrl(subdomain)}</code>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(tenantUrl || buildTenantUrl(subdomain)); toast.success("Copied!"); }} className="p-1 hover:bg-white/50 rounded">
+                    <Copy className="w-3.5 h-3.5 text-[var(--mute)]" />
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="p-5 bg-[var(--surface-card)] rounded-[16px]">
               <ShieldCheck className="w-8 h-8 text-[var(--ink)] mx-auto mb-2" />
               <h3 className="text-base font-semibold text-[var(--ink)] mb-1">Set up Passkey</h3>
               <p className="text-sm text-[var(--mute)]">Enable biometric login for faster, passwordless access.</p>
             </div>
             <PrimaryButton onClick={handleRegisterPasskey} icon={<Fingerprint className="w-4 h-4" />}>Setup Passkey</PrimaryButton>
-            <SecondaryButton onClick={() => navigate("/dashboard")}>Skip for now</SecondaryButton>
+            <SecondaryButton onClick={() => { if (tenantUrl) window.location.href = `${tenantUrl}/dashboard`; else navigate("/dashboard"); }}>Skip for now</SecondaryButton>
           </div>
         )}
 

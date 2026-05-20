@@ -13,15 +13,17 @@ Registration Flow
 2. Hospital Admin provides: email, password, hospital_name
    Doctor provides: email, password, invite_code
 3. POST /auth/register
-   - Hospital path: creates hospital + tenant DB + admin user
+   - Hospital path: creates hospital + tenant DB + admin user + unique subdomain
    - Doctor path: validates invite code, creates doctor user
    - Both: generates 6-digit OTP, stores in Redis (10min TTL)
    - Sends OTP to email via SMTP
+   - Response includes: subdomain, tenant_url (e.g. http://abc.localhost:5173)
 4. User enters OTP → POST /auth/verify-otp
    - Validates against Redis
    - Marks user as verified
-   - Returns access_token + refresh_token
-5. Optional: POST /auth/passkey/register/start + /verify
+   - Returns access_token + refresh_token + subdomain + tenant_url
+5. Frontend redirects user to their tenant subdomain
+6. Optional: POST /auth/passkey/register/start + /verify
    - Registers a WebAuthn credential
    - Scrambles the password (passkey-only from now on)
 

@@ -21,6 +21,11 @@ async def lifespan(app: FastAPI):
         await master_db.users.create_index("email", unique=True)
         await master_db.hospitals.create_index("hospital_id", unique=True)
         await master_db.hospitals.create_index("invite_code")
+        # Subdomain is the public-facing tenant identifier (URL slug). Unique
+        # but sparse so legacy records without a subdomain don't collide.
+        await master_db.hospitals.create_index(
+            "subdomain", unique=True, sparse=True
+        )
     else:
         print("❌ MongoDB connection failed — check DATABASE_URL")
 

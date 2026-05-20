@@ -1,6 +1,8 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_URL = `${API_BASE}/api/v1`;
 
+import { getCurrentSubdomain } from "../lib/subdomain";
+
 // ── Token helpers ───────────────────────────────────────────────────────────
 
 export const getAccessToken = () => localStorage.getItem("access_token");
@@ -61,6 +63,14 @@ export async function apiFetch(path, options = {}) {
   if (auth) {
     const token = getAccessToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // If we're served on a tenant subdomain, forward it to the API so the
+  // backend can resolve the tenant even when the API runs on a different
+  // origin (e.g. api.domain.com, or http://localhost:8000 in dev).
+  const sub = getCurrentSubdomain();
+  if (sub && !headers["X-Tenant-Subdomain"]) {
+    headers["X-Tenant-Subdomain"] = sub;
   }
 
   // Don't set Content-Type for FormData (browser sets boundary automatically)

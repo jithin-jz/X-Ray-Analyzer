@@ -7,6 +7,7 @@ from routes.tenants.schemas import TenantUpdateSchema
 from routes.tenants.service import (
     deactivate_tenant,
     get_tenant,
+    get_tenant_by_subdomain,
     list_all_tenants,
     regenerate_invite_code,
     update_tenant,
@@ -31,6 +32,18 @@ async def get_my_tenant(
     if not user.get("tenant_id"):
         return {"detail": "No tenant associated"}
     return await get_tenant(user["tenant_id"], db)
+
+
+@router.get("/by-subdomain/{subdomain}")
+async def lookup_by_subdomain(
+    subdomain: str,
+    db: AsyncIOMotorDatabase = Depends(get_master_db),
+):
+    """
+    Public — used by the SPA on a tenant subdomain to confirm the tenant
+    exists before showing its login page. Returns a non-sensitive subset.
+    """
+    return await get_tenant_by_subdomain(subdomain, db)
 
 
 @router.get("/{hospital_id}")
