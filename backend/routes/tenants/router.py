@@ -75,7 +75,9 @@ async def regenerate_invite(
     if user["role"] != "superadmin" and user.get("tenant_id") != hospital_id:
         from core.exceptions import ForbiddenException
 
-        raise ForbiddenException("You can only regenerate your own hospital's invite code")
+        raise ForbiddenException(
+            "You can only regenerate your own hospital's invite code"
+        )
     new_code = await regenerate_invite_code(hospital_id, db)
     return {"invite_code": new_code}
 
