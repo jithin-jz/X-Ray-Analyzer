@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     HF_MODEL_REPO: str = "jithinjz/xray-models"  # Where .pth weights are hosted
     HF_DATASET_REPO: str = "jithinjz/xray-chest-pneumonia"  # Where training zip is hosted
 
+    # Groq LLM
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def jwt_secret_min_length(cls, v: str) -> str:

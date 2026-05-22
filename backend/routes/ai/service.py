@@ -120,6 +120,21 @@ async def analyze_scan(
             scan_id=scan_id,
         )
 
+        local_explanation = _build_explanation(body_part, cfg, prediction, confidence)
+        local_summary = get_patient_summary(body_part, prediction, confidence)
+
+        from services.llm import generate_llm_explanations
+
+        patient_summary, rag_explanation = await generate_llm_explanations(
+            body_part=body_part,
+            body_part_label=cfg.label,
+            prediction=prediction,
+            confidence=confidence,
+            probabilities=probabilities,
+            local_patient_summary=local_summary,
+            local_clinical_explanation=local_explanation,
+        )
+
         # ── 7. Persist results ──────────────────────────────────────────────
         ai_result = {
             "body_part": body_part,
@@ -128,8 +143,8 @@ async def analyze_scan(
             "confidence": confidence,
             "probabilities": probabilities,
             "gradcam_path": gradcam_path,
-            "rag_explanation": _build_explanation(body_part, cfg, prediction, confidence),
-            "patient_summary": get_patient_summary(body_part, prediction, confidence),
+            "rag_explanation": rag_explanation,
+            "patient_summary": patient_summary,
         }
 
         return await save_ai_result(scan_id, ai_result, tenant_db)
