@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -9,8 +9,8 @@ class RegisterSchema(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     role: Literal["hospital", "doctor"] = "hospital"
-    hospital_name: Optional[str] = Field(default=None, max_length=120)
-    invite_code: Optional[str] = Field(default=None, max_length=20)
+    hospital_name: str | None = Field(default=None, max_length=120)
+    invite_code: str | None = Field(default=None, max_length=20)
 
 
 class LoginSchema(BaseModel):

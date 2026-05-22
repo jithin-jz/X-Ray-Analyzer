@@ -39,9 +39,7 @@ async def start_registration(email: str, db: AsyncIOMotorDatabase) -> dict:
     return json.loads(options_to_json(options))
 
 
-async def verify_registration(
-    email: str, response: dict, db: AsyncIOMotorDatabase
-) -> dict:
+async def verify_registration(email: str, response: dict, db: AsyncIOMotorDatabase) -> dict:
     expected_challenge = get_challenge(email)
     if not expected_challenge:
         raise BadRequestException("No active challenge")
@@ -54,7 +52,7 @@ async def verify_registration(
             expected_rp_id=RP_ID,
         )
     except Exception as e:
-        raise BadRequestException(str(e))
+        raise BadRequestException(str(e)) from e
 
     # Scramble password so only passkey login works
     scrambled = hash_password(secrets.token_hex(64))
@@ -90,9 +88,7 @@ async def start_login(email: str, db: AsyncIOMotorDatabase) -> dict:
 
     options = generate_authentication_options(
         rp_id=RP_ID,
-        allow_credentials=[
-            PublicKeyCredentialDescriptor(id=bytes.fromhex(user["credential_id"]))
-        ],
+        allow_credentials=[PublicKeyCredentialDescriptor(id=bytes.fromhex(user["credential_id"]))],
     )
     set_challenge(email, options.challenge)
 
@@ -120,7 +116,7 @@ async def verify_login(email: str, response: dict, db: AsyncIOMotorDatabase) -> 
             credential_current_sign_count=0,
         )
     except Exception as e:
-        raise BadRequestException(str(e))
+        raise BadRequestException(str(e)) from e
 
     delete_challenge(email)
 
