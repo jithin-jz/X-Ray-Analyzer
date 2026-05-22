@@ -18,7 +18,6 @@ from routes.auth.router import router as auth_router
 from routes.billing.router import router as billing_router
 from routes.passkey.router import router as passkey_router
 from routes.patient.router import router as patient_router
-from routes.rag.router import router as rag_router
 from routes.scan.router import router as scan_router
 from routes.tenants.router import router as tenant_router
 from routes.user.router import router as user_router
@@ -80,7 +79,6 @@ def create_app() -> FastAPI:
     app.include_router(patient_router, prefix=api_prefix)
     app.include_router(scan_router, prefix=api_prefix)
     app.include_router(ai_router, prefix=api_prefix)
-    app.include_router(rag_router, prefix=api_prefix)
     app.include_router(billing_router, prefix=api_prefix)
     app.include_router(admin_router, prefix=api_prefix)
 
