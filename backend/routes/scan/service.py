@@ -8,13 +8,14 @@ from core.exceptions import NotFoundException
 
 async def create_scan(data: dict, user_email: str, db: AsyncIOMotorDatabase) -> dict:
     doc = {
-        "scan_id": str(uuid.uuid4()),
+        "scan_id":    str(uuid.uuid4()),
         "patient_id": data["patient_id"],
-        "scan_type": data.get("scan_type", "chest_xray"),
-        "status": "uploaded",
+        "body_part":  data.get("body_part", "chest"),   # e.g. chest | knee | hand | spine
+        "scan_type":  data.get("scan_type", "xray"),
+        "status":     "pending",                        # pending → uploaded → processing → analyzed
         "image_path": None,
-        "ai_result": None,
-        "notes": data.get("notes"),
+        "ai_result":  None,
+        "notes":      data.get("notes"),
         "created_by": user_email,
         "reviewed_by": None,
         "created_at": datetime.now(timezone.utc),
