@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,17 +7,17 @@ class PatientCreateSchema(BaseModel):
     name: str
     age: int
     gender: str  # "M" | "F" | "Other"
-    contact: Optional[str] = None
-    date_of_birth: Optional[date] = None
-    medical_history: Optional[list[str]] = []
+    contact: str | None = None
+    date_of_birth: date | None = None
+    medical_history: list[str] | None = []
 
 
 class PatientUpdateSchema(BaseModel):
-    name: Optional[str] = None
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    contact: Optional[str] = None
-    medical_history: Optional[list[str]] = None
+    name: str | None = None
+    age: int | None = None
+    gender: str | None = None
+    contact: str | None = None
+    medical_history: list[str] | None = None
 
 
 class PatientOut(BaseModel):
@@ -26,6 +25,6 @@ class PatientOut(BaseModel):
     name: str
     age: int
     gender: str
-    contact: Optional[str] = None
+    contact: str | None = None
     medical_history: list[str] = []
     created_by: str

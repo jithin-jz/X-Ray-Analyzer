@@ -39,7 +39,9 @@ def create_app() -> FastAPI:
     # ── Middleware (order matters: last added = first executed) ───────────
     # CORS — allow configured origin + any tenant subdomain of BASE_DOMAIN
     escaped_base = re.escape(settings.BASE_DOMAIN)
-    tenant_origin_regex = rf"^https?://([a-z0-9]([a-z0-9-]{{0,61}}[a-z0-9])?\.)?{escaped_base}(:\d{{1,5}})?$"
+    tenant_origin_regex = (
+        rf"^https?://([a-z0-9]([a-z0-9-]{{0,61}}[a-z0-9])?\.)?{escaped_base}(:\d{{1,5}})?$"
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.ORIGIN],
@@ -47,8 +49,11 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=[
-            "Authorization", "Content-Type", "X-Tenant-Subdomain",
-            "X-Requested-With", "Accept",
+            "Authorization",
+            "Content-Type",
+            "X-Tenant-Subdomain",
+            "X-Requested-With",
+            "Accept",
         ],
     )
     app.add_middleware(RateLimitMiddleware)

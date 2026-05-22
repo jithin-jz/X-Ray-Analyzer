@@ -38,9 +38,7 @@ def _generate_otp() -> str:
     return str(secrets.randbelow(900000) + 100000)
 
 
-async def _generate_unique_subdomain(
-    hospital_name: str, db: AsyncIOMotorDatabase
-) -> str:
+async def _generate_unique_subdomain(hospital_name: str, db: AsyncIOMotorDatabase) -> str:
     """
     Derive a DNS-safe slug from hospital_name, ensure uniqueness.
     Uses the unique index on hospitals.subdomain as the final guard.
@@ -150,9 +148,7 @@ async def register_user(
     }
 
 
-async def verify_otp_and_activate(
-    email: str, otp: str, db: AsyncIOMotorDatabase
-) -> dict:
+async def verify_otp_and_activate(email: str, otp: str, db: AsyncIOMotorDatabase) -> dict:
     """Verify OTP, activate user, return tokens."""
     # Rate-limit OTP attempts to prevent brute force
     rate_key = f"otp_attempt:{email}"

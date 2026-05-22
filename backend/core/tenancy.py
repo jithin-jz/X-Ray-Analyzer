@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Optional
 
 from core.settings import settings
 
@@ -44,7 +43,7 @@ def is_reserved(sub: str) -> bool:
     return sub.lower() in settings.reserved_subdomains_set
 
 
-def extract_subdomain(host: Optional[str]) -> Optional[str]:
+def extract_subdomain(host: str | None) -> str | None:
     """
     Extract the tenant subdomain from a Host header.
 

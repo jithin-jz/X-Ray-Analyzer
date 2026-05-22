@@ -72,8 +72,8 @@ async def get_gradcam(
     from core.exceptions import NotFoundException
     from routes.scan.service import get_scan
 
-    scan        = await get_scan(scan_id, tenant_db)
-    ai_result   = scan.get("ai_result") or {}
+    scan = await get_scan(scan_id, tenant_db)
+    ai_result = scan.get("ai_result") or {}
     gradcam_path = ai_result.get("gradcam_path")
 
     if not gradcam_path or not Path(gradcam_path).exists():

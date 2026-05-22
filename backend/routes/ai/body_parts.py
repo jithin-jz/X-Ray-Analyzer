@@ -17,20 +17,18 @@ Adding a new body part:
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 
 @dataclass(frozen=True)
 class BodyPartConfig:
-    label:       str
-    conditions:  Tuple[str, ...]    # frozen-safe (immutable sequence)
-    model_file:  str
+    label: str
+    conditions: tuple[str, ...]  # frozen-safe (immutable sequence)
+    model_file: str
     description: str
 
 
 # ── Registry ──────────────────────────────────────────────────────────────────
-_REGISTRY: Dict[str, BodyPartConfig] = {
-
+_REGISTRY: dict[str, BodyPartConfig] = {
     # ── Chest ──────────────────────────────────────────────────────────────
     "chest": BodyPartConfig(
         label="Chest / Thorax",
@@ -41,7 +39,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects pneumonia, pleural effusion, and cardiomegaly."
         ),
     ),
-
     # ── Hand & Wrist ───────────────────────────────────────────────────────
     "hand": BodyPartConfig(
         label="Hand & Wrist",
@@ -52,7 +49,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects fractures, osteoarthritis, and bone cysts."
         ),
     ),
-
     # ── Foot & Ankle ───────────────────────────────────────────────────────
     "foot": BodyPartConfig(
         label="Foot & Ankle",
@@ -63,7 +59,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects fractures, flat foot deformity, and arthritis."
         ),
     ),
-
     # ── Knee ───────────────────────────────────────────────────────────────
     "knee": BodyPartConfig(
         label="Knee",
@@ -74,7 +69,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects osteoarthritis, fractures, and joint effusion."
         ),
     ),
-
     # ── Elbow ──────────────────────────────────────────────────────────────
     "elbow": BodyPartConfig(
         label="Elbow",
@@ -85,7 +79,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects fractures, dislocations, and arthritis."
         ),
     ),
-
     # ── Shoulder ───────────────────────────────────────────────────────────
     "shoulder": BodyPartConfig(
         label="Shoulder",
@@ -96,18 +89,22 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects fractures, dislocations, and AC joint injuries."
         ),
     ),
-
     # ── Spine (Lumbar / Cervical / Thoracic) ───────────────────────────────
     "spine": BodyPartConfig(
         label="Spine (Cervical / Thoracic / Lumbar)",
-        conditions=("Normal", "Scoliosis", "Compression_Fracture", "Disc_Narrowing", "Spondylolisthesis"),
+        conditions=(
+            "Normal",
+            "Scoliosis",
+            "Compression_Fracture",
+            "Disc_Narrowing",
+            "Spondylolisthesis",
+        ),
         model_file="spine.pth",
         description=(
             "Evaluates vertebral alignment, disc spaces, and bone density. "
             "Detects scoliosis, compression fractures, disc narrowing, and spondylolisthesis."
         ),
     ),
-
     # ── Hip & Pelvis ───────────────────────────────────────────────────────
     "hip": BodyPartConfig(
         label="Hip & Pelvis",
@@ -118,18 +115,15 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects fractures, hip dysplasia, arthritis, and avascular necrosis."
         ),
     ),
-
     # ── Forearm (Radius & Ulna) ────────────────────────────────────────────
     "forearm": BodyPartConfig(
         label="Forearm (Radius & Ulna)",
         conditions=("Normal", "Fracture", "Bowing"),
         model_file="forearm.pth",
         description=(
-            "Evaluates radial and ulnar shafts. "
-            "Detects fractures and bowing deformities."
+            "Evaluates radial and ulnar shafts. " "Detects fractures and bowing deformities."
         ),
     ),
-
     # ── Lower Leg (Tibia & Fibula) ─────────────────────────────────────────
     "leg": BodyPartConfig(
         label="Lower Leg (Tibia & Fibula)",
@@ -140,7 +134,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects acute fractures, stress fractures, and bone lesions."
         ),
     ),
-
     # ── Skull ──────────────────────────────────────────────────────────────
     "skull": BodyPartConfig(
         label="Skull",
@@ -151,7 +144,6 @@ _REGISTRY: Dict[str, BodyPartConfig] = {
             "Detects skull fractures and sinusitis."
         ),
     ),
-
     # ── Abdomen ────────────────────────────────────────────────────────────
     "abdomen": BodyPartConfig(
         label="Abdomen",
@@ -173,19 +165,16 @@ def get_body_part(key: str) -> BodyPartConfig:
     key = key.lower().strip()
     if key not in _REGISTRY:
         valid = ", ".join(sorted(_REGISTRY.keys()))
-        raise KeyError(
-            f"Unknown body part '{key}'. "
-            f"Supported values: {valid}"
-        )
+        raise KeyError(f"Unknown body part '{key}'. " f"Supported values: {valid}")
     return _REGISTRY[key]
 
 
-def list_body_parts() -> Dict[str, dict]:
+def list_body_parts() -> dict[str, dict]:
     """Return all supported body parts as a JSON-serializable dict."""
     return {
         key: {
-            "label":       cfg.label,
-            "conditions":  cfg.conditions,
+            "label": cfg.label,
+            "conditions": cfg.conditions,
             "description": cfg.description,
         }
         for key, cfg in _REGISTRY.items()
