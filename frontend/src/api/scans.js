@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, API_BASE } from "./client";
 
 export const listScans = (patientId = null) => {
   const query = patientId ? `?patient_id=${patientId}` : "";
@@ -28,8 +28,16 @@ export const uploadScanImage = async (scanId, file) => {
 export const deleteScan = (scanId) =>
   apiFetch(`/scans/${scanId}`, { method: "DELETE" });
 
-export const analyzeScan = (scanId) =>
+// body_part defaults to "chest" for backwards compatibility
+export const analyzeScan = (scanId, bodyPart = "chest") =>
   apiFetch("/ai/analyze", {
     method: "POST",
-    body: JSON.stringify({ scan_id: scanId }),
+    body: JSON.stringify({ scan_id: scanId, body_part: bodyPart }),
   });
+
+// Returns all supported body parts with conditions & descriptions
+export const getBodyParts = () => apiFetch("/ai/body-parts");
+
+// Returns the URL for the Grad-CAM heatmap image (use as <img src={...}>)
+export const gradcamUrl = (scanId) =>
+  `${API_BASE}/ai/gradcam/${scanId}`;

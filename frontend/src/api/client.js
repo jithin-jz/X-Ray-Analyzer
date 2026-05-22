@@ -133,4 +133,4 @@ export async function apiFetch(path, options = {}) {
   return res.json();
 }
 
-export { API_URL };
+export { API_URL, API_BASE };

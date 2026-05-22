@@ -44,8 +44,22 @@ async def upload_image(
     user: dict = Depends(require_doctor),
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
+    import shutil
+    from pathlib import Path
+
     tenant_id = user["tenant_id"]
-    image_path = f"uploads/{tenant_id}/{scan_id}/{file.filename}"
+
+    # Build a safe directory and write the file to disk
+    upload_dir = Path("uploads") / tenant_id / scan_id
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_filename = Path(file.filename).name  # strip any path components
+    dest = upload_dir / safe_filename
+
+    with dest.open("wb") as out:
+        shutil.copyfileobj(file.file, out)
+
+    image_path = str(dest)
     await tenant_db.scans.update_one(
         {"scan_id": scan_id},
         {"$set": {"image_path": image_path, "status": "uploaded"}},
