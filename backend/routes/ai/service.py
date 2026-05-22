@@ -57,15 +57,13 @@ async def analyze_scan(
     try:
         cfg = get_body_part(body_part)
     except KeyError as e:
-        raise BadRequestException(str(e))
+        raise BadRequestException(str(e)) from e
 
     # ── 2. Load scan & validate ─────────────────────────────────────────────
     scan = await get_scan(scan_id, tenant_db)
 
     if not scan.get("image_path"):
-        raise BadRequestException(
-            "Scan has no uploaded image. Upload the X-ray image first."
-        )
+        raise BadRequestException("Scan has no uploaded image. Upload the X-ray image first.")
 
     # Idempotent — return cached result if already analyzed for same body part
     if (
@@ -79,10 +77,12 @@ async def analyze_scan(
     # ── 3. Mark as processing ───────────────────────────────────────────────
     await tenant_db.scans.update_one(
         {"scan_id": scan_id},
-        {"$set": {
-            "status":    "processing",
-            "body_part": body_part,
-        }},
+        {
+            "$set": {
+                "status": "processing",
+                "body_part": body_part,
+            }
+        },
     )
     logger.info("Starting AI analysis: scan=%s  body_part=%s", scan_id, body_part)
 
@@ -94,8 +94,8 @@ async def analyze_scan(
 
         # ── 5. Inference (body-part-specific) ──────────────────────────────
         inference_result = await run_inference(tensor, body_part_key=body_part)
-        prediction    = inference_result["prediction"]
-        confidence    = inference_result["confidence"]
+        prediction = inference_result["prediction"]
+        confidence = inference_result["confidence"]
         probabilities = inference_result["probabilities"]
 
         # Map prediction → class index for Grad-CAM
@@ -103,7 +103,10 @@ async def analyze_scan(
 
         logger.info(
             "Scan %s [%s] → %s  %.1f%%",
-            scan_id, body_part, prediction, confidence * 100,
+            scan_id,
+            body_part,
+            prediction,
+            confidence * 100,
         )
 
         # ── 6. Grad-CAM heatmap ─────────────────────────────────────────────
@@ -119,12 +122,12 @@ async def analyze_scan(
 
         # ── 7. Persist results ──────────────────────────────────────────────
         ai_result = {
-            "body_part":       body_part,
+            "body_part": body_part,
             "body_part_label": cfg.label,
-            "prediction":      prediction,
-            "confidence":      confidence,
-            "probabilities":   probabilities,
-            "gradcam_path":    gradcam_path,
+            "prediction": prediction,
+            "confidence": confidence,
+            "probabilities": probabilities,
+            "gradcam_path": gradcam_path,
             "rag_explanation": _build_explanation(body_part, cfg, prediction, confidence),
             "patient_summary": get_patient_summary(body_part, prediction, confidence),
         }
@@ -133,17 +136,13 @@ async def analyze_scan(
 
     except FileNotFoundError as e:
         logger.error("Image missing for scan %s: %s", scan_id, e)
-        await tenant_db.scans.update_one(
-            {"scan_id": scan_id}, {"$set": {"status": "failed"}}
-        )
-        raise BadRequestException(f"Image file not found: {e}")
+        await tenant_db.scans.update_one({"scan_id": scan_id}, {"$set": {"status": "failed"}})
+        raise BadRequestException(f"Image file not found: {e}") from e
 
     except Exception as e:
         logger.exception("AI analysis failed for scan %s [%s]", scan_id, body_part)
-        await tenant_db.scans.update_one(
-            {"scan_id": scan_id}, {"$set": {"status": "failed"}}
-        )
-        raise BadRequestException(f"Analysis failed: {e}")
+        await tenant_db.scans.update_one({"scan_id": scan_id}, {"$set": {"status": "failed"}})
+        raise BadRequestException(f"Analysis failed: {e}") from e
 
 
 def _build_explanation(
@@ -169,24 +168,72 @@ def _build_explanation(
 
     # Body-part-specific clinical context
     clinical_notes = {
-        ("chest",   "Pneumonia"):              "Radiographic features such as consolidation or infiltrates may be present in the lung fields.",
-        ("knee",    "Osteoarthritis"):          "Findings may include joint space narrowing, osteophyte formation, or subchondral sclerosis.",
-        ("knee",    "Fracture"):                "A cortical break or trabecular disruption may be visible in the knee region.",
-        ("knee",    "Effusion"):                "Increased soft tissue density around the joint may indicate synovial effusion.",
-        ("hand",    "Fracture"):                "Disruption of the cortical margin may be seen in the metacarpals or phalanges.",
-        ("hand",    "Arthritis"):               "Joint space narrowing, erosions, or periarticular osteoporosis may be present.",
-        ("spine",   "Scoliosis"):               "Lateral curvature of the vertebral column is noted. Cobb angle measurement is recommended.",
-        ("spine",   "Compression_Fracture"):    "Loss of vertebral body height or wedge deformity may indicate a compression fracture.",
-        ("spine",   "Disc_Narrowing"):          "Reduced intervertebral disc height is observed, which may indicate degenerative disc disease.",
-        ("hip",     "Fracture"):                "Disruption of the femoral neck or acetabular continuity may be present.",
-        ("hip",     "Osteoarthritis"):          "Superior joint space narrowing and acetabular osteophytes may be seen.",
-        ("shoulder","Dislocation"):             "The humeral head may be displaced from the glenoid fossa.",
-        ("elbow",   "Fracture"):                "A cortical discontinuity may be seen at the radial head or olecranon.",
-        ("foot",    "Fracture"):                "Metatarsal or phalangeal cortical disruption may be present.",
-        ("skull",   "Fracture"):                "A linear lucency traversing the calvarium may indicate a skull fracture.",
-        ("abdomen", "Bowel_Obstruction"):       "Dilated bowel loops with air-fluid levels are suggestive of obstruction.",
-        ("abdomen", "Free_Air"):                "Free intraperitoneal air under the diaphragm may indicate visceral perforation.",
-        ("leg",     "Stress_Fracture"):         "A periosteal reaction or faint cortical break may suggest a stress fracture.",
+        (
+            "chest",
+            "Pneumonia",
+        ): "Radiographic features such as consolidation or infiltrates may be present in the lung fields.",
+        (
+            "knee",
+            "Osteoarthritis",
+        ): "Findings may include joint space narrowing, osteophyte formation, or subchondral sclerosis.",
+        (
+            "knee",
+            "Fracture",
+        ): "A cortical break or trabecular disruption may be visible in the knee region.",
+        (
+            "knee",
+            "Effusion",
+        ): "Increased soft tissue density around the joint may indicate synovial effusion.",
+        (
+            "hand",
+            "Fracture",
+        ): "Disruption of the cortical margin may be seen in the metacarpals or phalanges.",
+        (
+            "hand",
+            "Arthritis",
+        ): "Joint space narrowing, erosions, or periarticular osteoporosis may be present.",
+        (
+            "spine",
+            "Scoliosis",
+        ): "Lateral curvature of the vertebral column is noted. Cobb angle measurement is recommended.",
+        (
+            "spine",
+            "Compression_Fracture",
+        ): "Loss of vertebral body height or wedge deformity may indicate a compression fracture.",
+        (
+            "spine",
+            "Disc_Narrowing",
+        ): "Reduced intervertebral disc height is observed, which may indicate degenerative disc disease.",
+        (
+            "hip",
+            "Fracture",
+        ): "Disruption of the femoral neck or acetabular continuity may be present.",
+        (
+            "hip",
+            "Osteoarthritis",
+        ): "Superior joint space narrowing and acetabular osteophytes may be seen.",
+        ("shoulder", "Dislocation"): "The humeral head may be displaced from the glenoid fossa.",
+        (
+            "elbow",
+            "Fracture",
+        ): "A cortical discontinuity may be seen at the radial head or olecranon.",
+        ("foot", "Fracture"): "Metatarsal or phalangeal cortical disruption may be present.",
+        (
+            "skull",
+            "Fracture",
+        ): "A linear lucency traversing the calvarium may indicate a skull fracture.",
+        (
+            "abdomen",
+            "Bowel_Obstruction",
+        ): "Dilated bowel loops with air-fluid levels are suggestive of obstruction.",
+        (
+            "abdomen",
+            "Free_Air",
+        ): "Free intraperitoneal air under the diaphragm may indicate visceral perforation.",
+        (
+            "leg",
+            "Stress_Fracture",
+        ): "A periosteal reaction or faint cortical break may suggest a stress fracture.",
     }
 
     note = clinical_notes.get(

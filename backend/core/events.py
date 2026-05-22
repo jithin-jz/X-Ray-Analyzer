@@ -2,6 +2,7 @@
 Application lifecycle events (startup / shutdown).
 """
 
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -27,27 +28,23 @@ async def lifespan(app: FastAPI):
         redis_client.ping()
         logger.info("Redis connected")
     except Exception as e:
-        raise RuntimeError(f"Redis connection failed: {e}")
+        raise RuntimeError(f"Redis connection failed: {e}") from e
 
     # Create indexes (idempotent, wrapped in error handling)
     try:
         await master_db.users.create_index("email", unique=True)
         await master_db.hospitals.create_index("hospital_id", unique=True)
         await master_db.hospitals.create_index("invite_code")
-        await master_db.hospitals.create_index(
-            "subdomain", unique=True, sparse=True
-        )
+        await master_db.hospitals.create_index("subdomain", unique=True, sparse=True)
         logger.info("Database indexes ensured")
     except Exception as e:
         logger.error("Index creation failed: %s", e)
-        raise RuntimeError(f"Failed to create database indexes: {e}")
+        raise RuntimeError(f"Failed to create database indexes: {e}") from e
 
     yield
 
     # ── Shutdown ──
     logger.info("Shutting down...")
     client.close()
-    try:
+    with contextlib.suppress(Exception):
         redis_client.close()
-    except Exception:
-        pass

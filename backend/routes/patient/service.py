@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -15,7 +15,7 @@ async def create_patient(data: dict, user_email: str, db: AsyncIOMotorDatabase) 
         "contact": data.get("contact"),
         "medical_history": data.get("medical_history", []),
         "created_by": user_email,
-        "created_at": datetime.now(timezone.utc),
+        "created_at": datetime.now(UTC),
     }
     await db.patients.insert_one(doc)
     doc.pop("_id", None)
@@ -34,9 +34,7 @@ async def get_patient(patient_id: str, db: AsyncIOMotorDatabase) -> dict:
     return patient
 
 
-async def update_patient(
-    patient_id: str, updates: dict, db: AsyncIOMotorDatabase
-) -> dict:
+async def update_patient(patient_id: str, updates: dict, db: AsyncIOMotorDatabase) -> dict:
     clean = {k: v for k, v in updates.items() if v is not None}
     if not clean:
         return await get_patient(patient_id, db)

@@ -21,10 +21,7 @@ _NORMAL_TEMPLATE = {
         "The AI did not find any signs of disease or injury in your {part} X-ray. "
         "Everything appears to be within normal limits."
     ),
-    "what_it_means": (
-        "Based on this X-ray, your {part} looks healthy. "
-        "That is great news!"
-    ),
+    "what_it_means": ("Based on this X-ray, your {part} looks healthy. " "That is great news!"),
     "what_to_do": (
         "No urgent action is needed. Keep up with your regular health check-ups "
         "and let your doctor know if you develop any new symptoms."
@@ -36,7 +33,6 @@ _NORMAL_TEMPLATE = {
 # ── Condition-specific plain-English templates ────────────────────────────────
 
 PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
-
     # ── CHEST ─────────────────────────────────────────────────────────────────
     "chest": {
         "Normal": {
@@ -70,7 +66,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "⚠️",
         },
     },
-
     # ── KNEE ──────────────────────────────────────────────────────────────────
     "knee": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your knee looks healthy"},
@@ -131,7 +126,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "⚠️",
         },
     },
-
     # ── HAND / WRIST ──────────────────────────────────────────────────────────
     "hand": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your hand looks healthy"},
@@ -172,7 +166,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "✋",
         },
     },
-
     # ── SPINE / BACK ──────────────────────────────────────────────────────────
     "spine": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your spine looks healthy"},
@@ -229,7 +222,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "🚨",
         },
     },
-
     # ── SHOULDER ──────────────────────────────────────────────────────────────
     "shoulder": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your shoulder looks healthy"},
@@ -264,9 +256,7 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
                 "The AI found signs of a tear in the rotator cuff — the group "
                 "of muscles and tendons that keep your shoulder working."
             ),
-            "what_it_means": (
-                "This can cause pain, weakness, and difficulty lifting your arm."
-            ),
+            "what_it_means": ("This can cause pain, weakness, and difficulty lifting your arm."),
             "what_to_do": (
                 "See a doctor or orthopaedic specialist soon. Many rotator "
                 "cuff tears can be treated without surgery."
@@ -275,16 +265,13 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "⚠️",
         },
     },
-
     # ── HIP / PELVIS ──────────────────────────────────────────────────────────
     "hip": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your hip looks healthy"},
         "Fracture": {
             "headline": "Possible hip fracture detected",
             "what_found": "The AI found signs of a break in your hip bone.",
-            "what_it_means": (
-                "A hip fracture is serious and needs immediate medical attention."
-            ),
+            "what_it_means": ("A hip fracture is serious and needs immediate medical attention."),
             "what_to_do": "Go to a hospital emergency room right away.",
             "urgency": "urgent",
             "emoji": "🚨",
@@ -292,8 +279,7 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
         "Osteoarthritis": {
             "headline": "Signs of hip wear and tear detected",
             "what_found": (
-                "The AI found signs that the cartilage in your hip joint "
-                "has worn down."
+                "The AI found signs that the cartilage in your hip joint " "has worn down."
             ),
             "what_it_means": (
                 "Hip osteoarthritis is common and causes pain and stiffness. "
@@ -307,7 +293,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "⚠️",
         },
     },
-
     # ── FOOT / ANKLE ──────────────────────────────────────────────────────────
     "foot": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your foot looks healthy"},
@@ -337,7 +322,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "🦶",
         },
     },
-
     # ── SKULL / HEAD ──────────────────────────────────────────────────────────
     "skull": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your skull looks healthy"},
@@ -352,16 +336,12 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "🚨",
         },
     },
-
     # ── ABDOMEN ───────────────────────────────────────────────────────────────
     "abdomen": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your abdomen looks healthy"},
         "Bowel Obstruction": {
             "headline": "Possible blockage in your digestive system",
-            "what_found": (
-                "The AI found signs that something may be blocking your "
-                "intestines."
-            ),
+            "what_found": ("The AI found signs that something may be blocking your " "intestines."),
             "what_it_means": (
                 "A bowel obstruction stops food and liquid from passing through "
                 "normally and can become serious if not treated."
@@ -371,7 +351,6 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "emoji": "🚨",
         },
     },
-
     # ── FOREARM / ELBOW / LEG — generic fracture/normal ──────────────────────
     "forearm": {
         "Normal": {**_NORMAL_TEMPLATE, "headline": "Your forearm looks healthy"},
@@ -402,8 +381,7 @@ PATIENT_LANGUAGE: dict[str, dict[str, dict]] = {
             "what_found": "The AI found signs of a break in a bone in your lower leg.",
             "what_it_means": "Leg fractures need proper medical care to heal correctly.",
             "what_to_do": (
-                "Go to a hospital. Do not put weight on the leg until "
-                "a doctor has seen you."
+                "Go to a hospital. Do not put weight on the leg until " "a doctor has seen you."
             ),
             "urgency": "urgent",
             "emoji": "🚨",
@@ -442,12 +420,10 @@ def get_patient_summary(body_part: str, prediction: str, confidence: float) -> d
             template = {
                 "headline": f"Something was detected in your {body_part.replace('_', ' ')}",
                 "what_found": (
-                    f"The AI detected {prediction} in your "
-                    f"{body_part.replace('_', ' ')} X-ray."
+                    f"The AI detected {prediction} in your " f"{body_part.replace('_', ' ')} X-ray."
                 ),
                 "what_it_means": (
-                    "Please discuss this result with your doctor for a "
-                    "full explanation."
+                    "Please discuss this result with your doctor for a " "full explanation."
                 ),
                 "what_to_do": "Book an appointment with your doctor soon.",
                 "urgency": "soon",
@@ -456,15 +432,18 @@ def get_patient_summary(body_part: str, prediction: str, confidence: float) -> d
 
     # Fill in {part} placeholders
     part_label = body_part.replace("_", " ")
-    result = {k: (v.format(part=part_label) if isinstance(v, str) else v)
-              for k, v in template.items()}
+    result = {
+        k: (v.format(part=part_label) if isinstance(v, str) else v) for k, v in template.items()
+    }
 
     # Confidence in plain English
     pct = round(confidence * 100)
     if pct >= 90:
         conf_text = f"The AI is very confident in this result ({pct}%)."
     elif pct >= 75:
-        conf_text = f"The AI is fairly confident in this result ({pct}%). Your doctor should confirm."
+        conf_text = (
+            f"The AI is fairly confident in this result ({pct}%). Your doctor should confirm."
+        )
     else:
         conf_text = f"The AI is less certain about this result ({pct}%). A doctor's review is especially important."
 
