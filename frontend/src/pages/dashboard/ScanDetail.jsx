@@ -226,10 +226,50 @@ export default function ScanDetail() {
 
               {/* Patient summary */}
               {ai.patient_summary && (
-                <div className="bg-blue-50 border border-blue-100 rounded-[16px] p-5">
-                  <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mb-2">Patient Summary</p>
-                  <p className="text-sm text-blue-900 leading-relaxed">{ai.patient_summary}</p>
-                </div>
+                typeof ai.patient_summary === "string" ? (
+                  <div className="bg-blue-50 border border-blue-100 rounded-[16px] p-5">
+                    <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mb-2">Patient Summary</p>
+                    <p className="text-sm text-blue-900 leading-relaxed">{ai.patient_summary}</p>
+                  </div>
+                ) : (
+                  <div className={`rounded-[16px] p-6 border ${
+                    ai.patient_summary.urgency === "urgent"
+                      ? "bg-red-50 border-red-100 text-red-900"
+                      : ai.patient_summary.urgency === "soon"
+                      ? "bg-amber-50 border-amber-100 text-amber-900"
+                      : ai.patient_summary.urgency === "watch"
+                      ? "bg-blue-50 border-blue-100 text-blue-900"
+                      : "bg-emerald-50 border-emerald-100 text-emerald-900"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-2xl">{ai.patient_summary.emoji}</span>
+                      <h3 className="text-lg font-bold">{ai.patient_summary.headline}</h3>
+                    </div>
+                    <div className="space-y-3 text-sm leading-relaxed">
+                      <div>
+                        <span className="font-semibold block text-[10px] uppercase tracking-wider opacity-75">What the AI saw:</span>
+                        <p className="mt-0.5">{ai.patient_summary.what_found}</p>
+                      </div>
+                      {ai.patient_summary.what_it_means && (
+                        <div>
+                          <span className="font-semibold block text-[10px] uppercase tracking-wider opacity-75">What it means for you:</span>
+                          <p className="mt-0.5">{ai.patient_summary.what_it_means}</p>
+                        </div>
+                      )}
+                      {ai.patient_summary.what_to_do && (
+                        <div>
+                          <span className="font-semibold block text-[10px] uppercase tracking-wider opacity-75">Recommended Action:</span>
+                          <p className="mt-0.5">{ai.patient_summary.what_to_do}</p>
+                        </div>
+                      )}
+                      {ai.patient_summary.confidence_text && (
+                        <p className="text-xs italic opacity-60 pt-2.5 border-t border-current/10 mt-1">
+                          {ai.patient_summary.confidence_text}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Clinical explanation */}
