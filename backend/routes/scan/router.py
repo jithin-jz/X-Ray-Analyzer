@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -21,7 +19,7 @@ async def create(
 
 @router.get("/")
 async def list_all(
-    patient_id: Optional[str] = Query(None),
+    patient_id: str | None = Query(None),
     user: dict = Depends(require_doctor),
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):

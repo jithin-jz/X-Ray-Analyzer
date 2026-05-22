@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -22,11 +22,9 @@ async def get_usage(tenant_id: str, master_db: AsyncIOMotorDatabase) -> dict:
     user_count = await master_db.users.count_documents({"hospital_id": tenant_id})
 
     tenant_db = get_tenant_database(tenant_id)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    scan_count = await tenant_db.scans.count_documents(
-        {"created_at": {"$gte": month_start}}
-    )
+    scan_count = await tenant_db.scans.count_documents({"created_at": {"$gte": month_start}})
 
     return {
         "tenant_id": tenant_id,

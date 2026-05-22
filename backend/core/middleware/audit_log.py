@@ -1,5 +1,6 @@
+import contextlib
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -35,7 +36,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
                 tenant_id = payload.get("hospital_id")
 
         log_entry = {
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": datetime.now(UTC),
             "method": request.method,
             "path": request.url.path,
             "status_code": response.status_code,
@@ -45,10 +46,8 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             "client_ip": request.client.host if request.client else None,
         }
 
-        # Fire-and-forget insert — don't block the response
-        try:
+        # Fire-and-forget insert — never block the response
+        with contextlib.suppress(Exception):
             await master_db.audit_logs.insert_one(log_entry)
-        except Exception:
-            pass  # Audit log failure should never break the request
 
         return response

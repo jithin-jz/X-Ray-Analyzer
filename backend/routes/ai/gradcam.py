@@ -16,7 +16,6 @@ How it works:
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -43,7 +42,7 @@ async def generate_gradcam(
     predicted_class_idx: int,
     output_dir: str,
     scan_id: str,
-) -> Optional[str]:
+) -> str | None:
     """
     Generate a Grad-CAM heatmap overlay for the given X-ray scan.
 
@@ -63,13 +62,11 @@ async def generate_gradcam(
 
     # ── 1. Register hooks to capture activations and gradients ─────────────
     activations: list[torch.Tensor] = []
-    gradients:   list[torch.Tensor] = []
+    gradients: list[torch.Tensor] = []
 
     target_layer = _get_target_layer(model)
 
-    fwd_hook = target_layer.register_forward_hook(
-        lambda _, __, output: activations.append(output)
-    )
+    fwd_hook = target_layer.register_forward_hook(lambda _, __, output: activations.append(output))
     bwd_hook = target_layer.register_full_backward_hook(
         lambda _, __, grad_output: gradients.append(grad_output[0])
     )
@@ -80,8 +77,8 @@ async def generate_gradcam(
         tensor_grad = tensor.clone().detach().requires_grad_(True)
 
         model.zero_grad()
-        output = model(tensor_grad)                     # [1, num_classes]
-        score  = output[0, predicted_class_idx]         # scalar for target class
+        output = model(tensor_grad)  # [1, num_classes]
+        score = output[0, predicted_class_idx]  # scalar for target class
         score.backward()
 
         if not activations or not gradients:
@@ -89,15 +86,15 @@ async def generate_gradcam(
             return None
 
         # ── 3. Compute channel-wise importance weights ─────────────────────
-        act  = activations[0].detach()                  # [1, C, H, W]
-        grad = gradients[0].detach()                    # [1, C, H, W]
-        weights = grad.mean(dim=(2, 3), keepdim=True)   # [1, C, 1, 1]
+        act = activations[0].detach()  # [1, C, H, W]
+        grad = gradients[0].detach()  # [1, C, H, W]
+        weights = grad.mean(dim=(2, 3), keepdim=True)  # [1, C, 1, 1]
 
         # ── 4. Weighted combination of activation maps ─────────────────────
         cam = (weights * act).sum(dim=1, keepdim=True)  # [1, 1, H, W]
-        cam = torch.relu(cam)                           # only positive influence
-        cam = cam.squeeze().cpu().numpy()               # [H, W] or scalar
-        cam = np.atleast_2d(cam)                        # ensure 2-D even if squeezed too far
+        cam = torch.relu(cam)  # only positive influence
+        cam = cam.squeeze().cpu().numpy()  # [H, W] or scalar
+        cam = np.atleast_2d(cam)  # ensure 2-D even if squeezed too far
 
         # ── 5. Normalize to [0, 255] ────────────────────────────────────────
         cam_min, cam_max = cam.min(), cam.max()
@@ -113,8 +110,8 @@ async def generate_gradcam(
         cam_resized = cv2.resize(cam, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
 
         # ── 7. Apply colormap and blend ─────────────────────────────────────
-        heatmap_bgr = cv2.applyColorMap(cam_resized, cv2.COLORMAP_JET)   # BGR
-        heatmap_rgb = cv2.cvtColor(heatmap_bgr, cv2.COLOR_BGR2RGB)       # RGB
+        heatmap_bgr = cv2.applyColorMap(cam_resized, cv2.COLORMAP_JET)  # BGR
+        heatmap_rgb = cv2.cvtColor(heatmap_bgr, cv2.COLOR_BGR2RGB)  # RGB
 
         orig_np = np.array(original)
         overlay = cv2.addWeighted(orig_np, 0.6, heatmap_rgb, 0.4, 0)

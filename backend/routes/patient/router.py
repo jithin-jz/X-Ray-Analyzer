@@ -47,9 +47,7 @@ async def update(
     user: dict = Depends(require_doctor),
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
-    return await update_patient(
-        patient_id, data.model_dump(exclude_none=True), tenant_db
-    )
+    return await update_patient(patient_id, data.model_dump(exclude_none=True), tenant_db)
 
 
 @router.delete("/{patient_id}")

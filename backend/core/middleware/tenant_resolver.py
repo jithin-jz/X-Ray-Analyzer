@@ -61,6 +61,7 @@ class TenantResolverMiddleware(BaseHTTPMiddleware):
                 return None
             if cached:
                 import json
+
                 return json.loads(cached)
         except Exception:
             pass  # Cache miss or Redis down — fall through to DB
@@ -75,6 +76,7 @@ class TenantResolverMiddleware(BaseHTTPMiddleware):
         # Cache result
         try:
             import json
+
             if hospital:
                 # Only cache safe fields
                 cacheable = {

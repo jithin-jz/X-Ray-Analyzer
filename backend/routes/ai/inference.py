@@ -12,7 +12,6 @@ Final fallback:       ImageNet weights if HF is also unavailable (lower accuracy
 
 import logging
 from pathlib import Path
-from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -26,10 +25,11 @@ MODELS_DIR = Path(__file__).parent / "models"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # In-memory cache: body_part_key → loaded nn.Module
-_model_cache: Dict[str, nn.Module] = {}
+_model_cache: dict[str, nn.Module] = {}
 
 
 # ── Cloud Download Helper ─────────────────────────────────────────────────────
+
 
 def _ensure_model_weights(cfg: BodyPartConfig) -> None:
     """
@@ -47,8 +47,9 @@ def _ensure_model_weights(cfg: BodyPartConfig) -> None:
         return  # Already present — nothing to do
 
     try:
-        from core.settings import settings
         from huggingface_hub import hf_hub_download
+
+        from core.settings import settings
     except ImportError:
         logger.warning("huggingface_hub not installed — cannot auto-download model weights.")
         return
@@ -61,8 +62,12 @@ def _ensure_model_weights(cfg: BodyPartConfig) -> None:
         return
 
     token = settings.HF_TOKEN or None  # None = public repo, token = private repo
-    logger.info("[%s] Weights not found locally. Downloading from HF Hub: %s/%s ...",
-                cfg.model_file, repo_id, cfg.model_file)
+    logger.info(
+        "[%s] Weights not found locally. Downloading from HF Hub: %s/%s ...",
+        cfg.model_file,
+        repo_id,
+        cfg.model_file,
+    )
     try:
         MODELS_DIR.mkdir(parents=True, exist_ok=True)
         downloaded = hf_hub_download(
@@ -75,11 +80,13 @@ def _ensure_model_weights(cfg: BodyPartConfig) -> None:
     except Exception as exc:
         logger.warning(
             "[%s] HF Hub download failed (%s). Will fall back to ImageNet weights.",
-            cfg.model_file, exc
+            cfg.model_file,
+            exc,
         )
 
 
 # ── Model Construction ────────────────────────────────────────────────────────
+
 
 def _build_densenet(num_classes: int) -> nn.Module:
     """
@@ -87,7 +94,7 @@ def _build_densenet(num_classes: int) -> nn.Module:
     num_classes = number of conditions for the target body part.
     """
     net = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
-    in_features = net.classifier.in_features          # 1024
+    in_features = net.classifier.in_features  # 1024
     net.classifier = nn.Linear(in_features, num_classes)
     return net
 
@@ -118,14 +125,17 @@ def _load_model_for_part(body_part_key: str, cfg: BodyPartConfig) -> nn.Module:
         except RuntimeError as e:
             logger.warning(
                 "[%s] Weight shape mismatch — falling back to ImageNet weights. Error: %s",
-                body_part_key, e,
+                body_part_key,
+                e,
             )
     else:
         logger.warning(
             "[%s] No fine-tuned weights found at %s. "
             "Using ImageNet pretrained weights — accuracy will be limited. "
             "Train a model and place it at models/%s to improve accuracy.",
-            body_part_key, weights_path, cfg.model_file,
+            body_part_key,
+            weights_path,
+            cfg.model_file,
         )
 
     model.to(DEVICE)
@@ -134,6 +144,7 @@ def _load_model_for_part(body_part_key: str, cfg: BodyPartConfig) -> nn.Module:
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
 
 def get_model(body_part_key: str) -> nn.Module:
     """
@@ -154,6 +165,7 @@ def preload_all_models() -> None:
     Only preloads models whose .pth file exists.
     """
     from routes.ai.body_parts import _REGISTRY
+
     for key, cfg in _REGISTRY.items():
         if (MODELS_DIR / cfg.model_file).exists():
             get_model(key)
@@ -176,32 +188,31 @@ async def run_inference(tensor: torch.Tensor, body_part_key: str) -> dict:
           "probabilities": {"Normal": 0.08, "Osteoarthritis": 0.87, "Fracture": 0.03, "Effusion": 0.02}
         }
     """
-    cfg    = get_body_part(body_part_key)
-    model  = get_model(body_part_key)
+    cfg = get_body_part(body_part_key)
+    model = get_model(body_part_key)
 
     tensor = tensor.to(DEVICE)
 
     with torch.no_grad():
-        logits = model(tensor)                        # [1, num_classes]
-        probs  = torch.softmax(logits, dim=1)[0]      # [num_classes]
+        logits = model(tensor)  # [1, num_classes]
+        probs = torch.softmax(logits, dim=1)[0]  # [num_classes]
 
     predicted_idx = int(probs.argmax().item())
-    confidence    = float(probs[predicted_idx].item())
-    prediction    = cfg.conditions[predicted_idx]
+    confidence = float(probs[predicted_idx].item())
+    prediction = cfg.conditions[predicted_idx]
 
-    probabilities = {
-        cls: round(float(probs[i].item()), 4)
-        for i, cls in enumerate(cfg.conditions)
-    }
+    probabilities = {cls: round(float(probs[i].item()), 4) for i, cls in enumerate(cfg.conditions)}
 
     logger.info(
         "[%s] prediction=%s  confidence=%.1f%%",
-        body_part_key, prediction, confidence * 100,
+        body_part_key,
+        prediction,
+        confidence * 100,
     )
 
     return {
-        "body_part":     body_part_key,
-        "prediction":    prediction,
-        "confidence":    round(confidence, 4),
+        "body_part": body_part_key,
+        "prediction": prediction,
+        "confidence": round(confidence, 4),
         "probabilities": probabilities,
     }

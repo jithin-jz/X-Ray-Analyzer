@@ -16,9 +16,7 @@ async def get_platform_stats(db: AsyncIOMotorDatabase) -> dict:
     }
 
 
-async def get_dashboard_data(
-    role: str, hospital_id: str | None, db: AsyncIOMotorDatabase
-) -> dict:
+async def get_dashboard_data(role: str, hospital_id: str | None, db: AsyncIOMotorDatabase) -> dict:
     """Returns role-specific dashboard data."""
     if role == "superadmin":
         stats = await get_platform_stats(db)

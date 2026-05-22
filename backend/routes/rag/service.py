@@ -19,9 +19,7 @@ async def query_rag(query: str, scan_id: str | None = None) -> dict:
 
         return {
             "answer": answer,
-            "sources": [
-                {"content": c["content"][:200], "score": c.get("score")} for c in chunks
-            ],
+            "sources": [{"content": c["content"][:200], "score": c.get("score")} for c in chunks],
         }
-    except NotImplementedError:
-        raise BadRequestException("RAG pipeline not yet implemented")
+    except NotImplementedError as e:
+        raise BadRequestException("RAG pipeline not yet implemented") from e

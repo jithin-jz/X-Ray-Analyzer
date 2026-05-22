@@ -1,14 +1,12 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
 class TenantOut(BaseModel):
     hospital_id: str
     name: str
-    subdomain: Optional[str] = None
-    tenant_url: Optional[str] = None
-    invite_code: Optional[str] = None
+    subdomain: str | None = None
+    tenant_url: str | None = None
+    invite_code: str | None = None
     plan: str = "free"
     max_users: int = 5
     max_scans_per_month: int = 100
@@ -26,8 +24,8 @@ class TenantPublicOut(BaseModel):
 
 
 class TenantUpdateSchema(BaseModel):
-    name: Optional[str] = None
-    plan: Optional[str] = None
-    max_users: Optional[int] = None
-    max_scans_per_month: Optional[int] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    plan: str | None = None
+    max_users: int | None = None
+    max_scans_per_month: int | None = None
+    is_active: bool | None = None
