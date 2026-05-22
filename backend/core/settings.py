@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str = ""
     S3_SECRET_KEY: str = ""
 
+    # Hugging Face Hub (cloud model & dataset storage)
+    HF_TOKEN: str = ""                                           # Optional for public repos
+    HF_MODEL_REPO: str = "jithinjz/xray-models"                 # Where .pth weights are hosted
+    HF_DATASET_REPO: str = "jithinjz/xray-chest-pneumonia"      # Where training zip is hosted
+
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def jwt_secret_min_length(cls, v: str) -> str:

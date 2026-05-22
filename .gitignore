@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -22,11 +21,11 @@ wheels/
 *.egg
 .ruff_cache/
 
-# Environments
-.venv
-env/
+# Virtual environments
+.venv/
 venv/
 ENV/
+env/
 
 # Docker
 .dockerignore
@@ -41,4 +40,18 @@ frontend/dist/
 frontend/.next/
 frontend/out/
 frontend/build/
+
+# Logs
 *.log
+
+# Cloud Storage (Hugging Face Hub)
+# Training data and model weights live in HF Hub — do NOT commit locally
+backend/data/
+backend/routes/ai/models/*.pth
+
+# Runtime uploads (user X-ray images and generated Grad-CAM heatmaps)
+backend/uploads/
+
+# NOTE: backend/.env is intentionally NOT ignored — it is committed to the repo
+# so the app works out of the box on a fresh clone.
+# Rotate any secrets after sharing the repo publicly.
