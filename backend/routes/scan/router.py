@@ -1,7 +1,11 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi.responses import FileResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.dependencies import get_tenant_db, require_doctor
+from core.exceptions import NotFoundException
 from routes.scan.schemas import ScanCreateSchema
 from routes.scan.service import create_scan, delete_scan, get_scan, list_scans
 
@@ -33,6 +37,31 @@ async def get_one(
     tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
 ):
     return await get_scan(scan_id, tenant_db)
+
+
+@router.get("/{scan_id}/image")
+async def get_image(
+    scan_id: str,
+    user: dict = Depends(require_doctor),
+    tenant_db: AsyncIOMotorDatabase = Depends(get_tenant_db),
+):
+    scan = await get_scan(scan_id, tenant_db)
+    image_path = scan.get("image_path")
+    if not image_path or not Path(image_path).exists():
+        raise NotFoundException("Scan image not found.")
+
+    suffix = Path(image_path).suffix.lower()
+    media_type = "image/png"
+    if suffix in [".jpg", ".jpeg"]:
+        media_type = "image/jpeg"
+    elif suffix == ".gif":
+        media_type = "image/gif"
+
+    return FileResponse(
+        path=image_path,
+        media_type=media_type,
+        filename=Path(image_path).name,
+    )
 
 
 @router.post("/{scan_id}/upload")

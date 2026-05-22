@@ -1,4 +1,4 @@
-import { apiFetch, API_BASE } from "./client";
+import { apiFetch, API_URL } from "./client";
 
 export const listScans = (patientId = null) => {
   const query = patientId ? `?patient_id=${patientId}` : "";
@@ -40,4 +40,8 @@ export const getBodyParts = () => apiFetch("/ai/body-parts");
 
 // Returns the URL for the Grad-CAM heatmap image (use as <img src={...}>)
 export const gradcamUrl = (scanId) =>
-  `${API_BASE}/ai/gradcam/${scanId}`;
+  `${API_URL}/ai/gradcam/${scanId}`;
+
+// Returns the URL for the raw scan image (use as <img src={...}>)
+export const scanImageUrl = (scanId) =>
+  `${API_URL}/scans/${scanId}/image`;
