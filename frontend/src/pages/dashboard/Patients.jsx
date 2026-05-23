@@ -45,39 +45,44 @@ export default function Patients() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-[22px] sm:text-[28px] font-bold text-[var(--ink)]" style={{ letterSpacing: "-1.2px" }}>Patients</h1>
-          <p className="text-[13px] sm:text-sm text-[var(--mute)] mt-0.5">{patients.length} total</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-ink tracking-[-1.2px] leading-tight">Patients</h1>
+          <p className="text-sm text-mute mt-1">{patients.length} total</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[9999px] hover:bg-[var(--primary-pressed)] transition-colors w-full sm:w-auto">
+        <button onClick={() => setShowCreate(true)} className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-bold text-white bg-primary rounded-md hover:bg-primary-pressed transition-colors w-full sm:w-auto cursor-pointer">
           <Plus className="w-4 h-4" /> Add Patient
         </button>
       </div>
 
-      {/* Search */}
+      {/* Search Bar - rounded-full, 48px height, default bg surface-card */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ash)]" />
-        <input type="text" placeholder="Search patients..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[9999px] text-sm text-[var(--ink)] placeholder:text-[var(--ash)] focus:outline-none focus:bg-[var(--canvas)] focus:border-[var(--ash)] transition-colors" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ash" />
+        <input
+          type="text"
+          placeholder="Search patients..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full h-12 pl-12 pr-4 bg-surface-card border border-hairline rounded-full text-sm text-ink placeholder:text-ash focus:outline-none focus:bg-canvas focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all"
+        />
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState icon={Users} title="No patients found" description={search ? "Try a different search." : "Add your first patient."} />
       ) : (
-        <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px] overflow-hidden divide-y divide-[var(--hairline)]">
+        <div className="bg-canvas border border-hairline rounded-md overflow-hidden divide-y divide-hairline">
           {filtered.map((p) => (
             <div key={p.patient_id} className="px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-[var(--surface-card)] rounded-full flex items-center justify-center text-[var(--ink)] text-xs font-bold">
+                <div className="w-9 h-9 bg-surface-card rounded-full flex items-center justify-center text-ink text-xs font-bold">
                   {p.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[var(--ink)]">{p.name}</p>
-                  <p className="text-xs text-[var(--ash)]">{p.age}y / {p.gender}</p>
+                  <p className="text-sm font-semibold text-ink">{p.name}</p>
+                  <p className="text-xs text-ash">{p.age}y / {p.gender}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => navigate(`/dashboard/patients/${p.patient_id}`)} className="p-2 text-[var(--ash)] hover:text-[var(--ink)] hover:bg-[var(--surface-card)] rounded-[16px] transition-colors"><Eye className="w-4 h-4" /></button>
-                <button onClick={() => setConfirmDelete(p.patient_id)} className="p-2 text-[var(--ash)] hover:text-[var(--error)] hover:bg-red-50 rounded-[16px] transition-colors"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => navigate(`/dashboard/patients/${p.patient_id}`)} className="p-2 text-ash hover:text-ink hover:bg-surface-card rounded-md transition-colors cursor-pointer"><Eye className="w-4 h-4" /></button>
+                <button onClick={() => setConfirmDelete(p.patient_id)} className="p-2 text-ash hover:text-error hover:bg-red-50 rounded-md transition-colors cursor-pointer"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           ))}
@@ -86,18 +91,26 @@ export default function Patients() {
 
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Add Patient">
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 rounded-[16px] bg-red-50 text-[var(--error)] text-sm">{error}</div>}
-          <input required placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm text-[var(--ink)] placeholder:text-[var(--ash)] focus:outline-none focus:border-[var(--ink)]" />
+          {error && <div className="p-3 rounded-md bg-red-50 text-error text-sm font-semibold border border-red-100">{error}</div>}
+          
+          <div>
+            <input required placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" />
+          </div>
+          
           <div className="grid grid-cols-2 gap-3">
-            <input required type="number" min="0" max="150" placeholder="Age" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
-            <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]">
+            <input required type="number" min="0" max="150" placeholder="Age" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" />
+            <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all cursor-pointer">
               <option value="M">Male</option><option value="F">Female</option><option value="Other">Other</option>
             </select>
           </div>
-          <input placeholder="Contact (optional)" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm placeholder:text-[var(--ash)] focus:outline-none focus:border-[var(--ink)]" />
+          
+          <div>
+            <input placeholder="Contact (optional)" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" />
+          </div>
+          
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowCreate(false)} className="flex-1 py-3 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] transition-colors">Cancel</button>
-            <button type="submit" disabled={creating} className="flex-1 py-3 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[16px] hover:bg-[var(--primary-pressed)] disabled:opacity-50 transition-colors">{creating ? "Creating..." : "Create"}</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="flex-1 h-10 text-sm font-bold text-ink bg-secondary-bg rounded-md hover:bg-secondary-pressed transition-colors cursor-pointer">Cancel</button>
+            <button type="submit" disabled={creating} className="flex-1 h-10 text-sm font-bold text-white bg-primary rounded-md hover:bg-primary-pressed disabled:opacity-50 transition-colors cursor-pointer">{creating ? "Creating..." : "Create"}</button>
           </div>
         </form>
       </Modal>

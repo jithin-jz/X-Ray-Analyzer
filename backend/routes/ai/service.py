@@ -175,10 +175,14 @@ def _build_explanation(
 
     if prediction == "Normal":
         return (
-            f"No significant abnormalities detected in the {part_label} X-ray "
-            f"(confidence: {pct}%). "
-            "The imaging appears within normal limits based on the AI model. "
-            "Always confirm findings with a qualified radiologist."
+            "### Findings Summary\n"
+            f"- AI prediction: Normal ({pct}% confidence).\n"
+            f"- No significant abnormalities detected in the {part_label} X-ray.\n\n"
+            "### Differential Diagnosis & Significance\n"
+            "- Findings are within standard physiological limits.\n\n"
+            "### Recommendations\n"
+            "- Routine clinical follow-up as indicated.\n"
+            "- Correlate with patient's baseline history."
         )
 
     # Body-part-specific clinical context
@@ -257,8 +261,13 @@ def _build_explanation(
     )
 
     return (
-        f"The AI model detected findings consistent with "
-        f"{prediction.replace('_', ' ')} in the {part_label} "
-        f"(confidence: {pct}%). {note} "
-        "Clinical correlation and physician review is strongly recommended."
+        "### Findings Summary\n"
+        f"- AI prediction: {prediction.replace('_', ' ')} ({pct}% confidence).\n"
+        f"- {note}\n\n"
+        "### Differential Diagnosis & Significance\n"
+        f"- High-yield indicator of acute/degenerative changes in the {part_label}.\n"
+        "- Consider primary presentation details.\n\n"
+        "### Recommendations\n"
+        "- Immediate clinical correlation with symptoms.\n"
+        "- Order confirmatory imaging or lab work if clinically indicated."
     )

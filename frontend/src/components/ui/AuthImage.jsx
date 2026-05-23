@@ -62,7 +62,7 @@ export default function AuthImage({ src, alt, className = "", ...props }) {
 
   if (loading) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-[var(--surface-card)] rounded-[12px] border border-[var(--hairline)] ${className}`} {...props}>
+      <div className={`flex flex-col items-center justify-center bg-[var(--surface-card)] rounded-md border border-[var(--hairline)] ${className}`} {...props}>
         <Loader2 className="w-6 h-6 text-[var(--mute)] animate-spin mb-2" />
         <span className="text-xs text-[var(--mute)] font-medium">Loading image...</span>
       </div>
@@ -71,7 +71,7 @@ export default function AuthImage({ src, alt, className = "", ...props }) {
 
   if (error || !imgSrc) {
     return (
-      <div className={`flex flex-col items-center justify-center bg-[var(--surface-card)] rounded-[12px] border-2 border-dashed border-[var(--hairline)] p-6 ${className}`} {...props}>
+      <div className={`flex flex-col items-center justify-center bg-[var(--surface-card)] rounded-md border-2 border-dashed border-[var(--hairline)] p-6 ${className}`} {...props}>
         <ImageIcon className="w-8 h-8 text-[var(--ash)] mb-2" />
         <span className="text-xs text-[var(--mute)] font-medium">Unable to load medical image</span>
       </div>
@@ -82,7 +82,7 @@ export default function AuthImage({ src, alt, className = "", ...props }) {
     <img
       src={imgSrc}
       alt={alt}
-      className={`rounded-[12px] object-cover transition-opacity duration-300 ${className}`}
+      className={`rounded-md object-cover transition-opacity duration-300 ${className}`}
       {...props}
     />
   );

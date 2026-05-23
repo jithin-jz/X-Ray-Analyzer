@@ -78,34 +78,34 @@ export default function PatientDetail() {
   if (!patient) {
     return (
       <div className="text-center py-20">
-        <p className="text-[var(--mute)]">Patient not found.</p>
-        <button onClick={() => navigate("/dashboard/patients")} className="mt-4 text-[var(--primary)] font-semibold hover:underline">Back to Patients</button>
+        <p className="text-mute">Patient not found.</p>
+        <button onClick={() => navigate("/dashboard/patients")} className="mt-4 text-primary font-bold hover:underline">Back to Patients</button>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <button onClick={() => navigate("/dashboard/patients")} className="flex items-center gap-2 text-sm text-[var(--mute)] hover:text-[var(--ink)] transition-colors">
+      <button onClick={() => navigate("/dashboard/patients")} className="flex items-center gap-2 text-sm text-mute hover:text-ink transition-colors cursor-pointer font-semibold">
         <ArrowLeft className="w-4 h-4" /> Back to Patients
       </button>
 
       {/* Patient info */}
-      <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px] p-8 ">
+      <div className="bg-canvas border border-hairline rounded-md p-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-[16px] bg-[var(--surface-card)] text-[var(--primary)] flex items-center justify-center text-2xl font-bold">
+            <div className="w-16 h-16 rounded-md bg-surface-card text-primary flex items-center justify-center text-2xl font-bold">
               {patient.name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[var(--ink)]">{patient.name}</h1>
-              <p className="text-[var(--ash)] text-sm mt-1">
+              <h1 className="text-2xl font-bold text-ink tracking-tight">{patient.name}</h1>
+              <p className="text-ash text-sm mt-1">
                 {patient.age}y &middot; {patient.gender} &middot; {patient.contact || "No contact"}
               </p>
-              <p className="text-xs text-[var(--ash)] font-mono mt-1">ID: {patient.patient_id}</p>
+              <p className="text-xs text-ash font-mono mt-1">ID: {patient.patient_id}</p>
             </div>
           </div>
-          <button onClick={openEdit} className="flex items-center gap-2 px-4 py-2 border border-[var(--hairline)] rounded-[16px] text-sm font-medium text-[var(--mute)] hover:bg-[var(--surface-card)] hover:border-gray-300 transition-colors">
+          <button onClick={openEdit} className="flex items-center gap-2 h-10 px-4 border border-hairline bg-transparent rounded-md text-sm font-bold text-mute hover:bg-surface-card hover:text-ink transition-colors cursor-pointer">
             <Pencil className="w-4 h-4" /> Edit
           </button>
         </div>
@@ -113,30 +113,30 @@ export default function PatientDetail() {
 
       {/* Scans */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[var(--ink)]">Scans ({scans.length})</h2>
-        <button onClick={() => navigate(`/dashboard/scans?patient=${patientId}`)} className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-[16px] text-sm font-semibold hover:bg-[var(--primary-pressed)] transition-colors">
+        <h2 className="text-xl font-bold text-ink tracking-tight">Scans ({scans.length})</h2>
+        <button onClick={() => navigate(`/dashboard/scans?patient=${patientId}`)} className="flex items-center gap-2 px-4 h-10 bg-primary text-white rounded-md text-sm font-bold hover:bg-primary-pressed transition-colors cursor-pointer">
           <Plus className="w-4 h-4" /> New Scan
         </button>
       </div>
 
       {scans.length === 0 ? (
-        <div className="text-center py-12 text-[var(--ash)]">
-          <ScanLine className="w-10 h-10 mx-auto mb-3 text-[var(--ash)]" />
-          <p>No scans for this patient yet.</p>
+        <div className="text-center py-12 text-ash">
+          <ScanLine className="w-10 h-10 mx-auto mb-3 text-ash" />
+          <p className="font-semibold">No scans for this patient yet.</p>
         </div>
       ) : (
-        <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]  overflow-hidden divide-y divide-[var(--hairline)]">
+        <div className="bg-canvas border border-hairline rounded-md overflow-hidden divide-y divide-hairline">
           {scans.map((s) => {
             const status = STATUS_MAP[s.status] || STATUS_MAP.uploaded;
             return (
-              <div key={s.scan_id} className="px-6 py-5 flex items-center justify-between hover:bg-[var(--surface-card)] transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)}>
+              <div key={s.scan_id} className="px-6 py-5 flex items-center justify-between hover:bg-surface-card transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)}>
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-[16px] bg-[var(--surface-card)] text-[var(--ash)] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-md bg-surface-card text-ash flex items-center justify-center">
                     <ScanLine className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-[var(--ink)]">{s.scan_type?.replace("_", " ")} scan</p>
-                    <p className="text-xs text-[var(--ash)] font-mono">ID: {s.scan_id?.slice(0, 8)}</p>
+                    <p className="font-semibold text-ink text-sm">{s.scan_type?.replace("_", " ")} scan</p>
+                    <p className="text-xs text-ash font-mono">ID: {s.scan_id?.slice(0, 8)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -150,34 +150,38 @@ export default function PatientDetail() {
           })}
         </div>
       )}
+      
       {/* Edit Patient Modal */}
       <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit Patient">
         <form onSubmit={handleUpdate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--ink)] mb-1">Full Name</label>
-            <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Full Name</label>
+            <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Age</label>
-              <input required type="number" min="0" max="150" value={editForm.age} onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" />
+              <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Age</label>
+              <input required type="number" min="0" max="150" value={editForm.age} onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Gender</label>
-              <select value={editForm.gender} onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)] bg-[var(--canvas)]">
+              <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Gender</label>
+              <select value={editForm.gender} onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all cursor-pointer">
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="Other">Other</option>
               </select>
             </div>
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-[var(--ink)] mb-1">Contact</label>
-            <input value={editForm.contact} onChange={(e) => setEditForm({ ...editForm, contact: e.target.value })} className="w-full px-4 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]" placeholder="+91 9876543210" />
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Contact</label>
+            <input value={editForm.contact} onChange={(e) => setEditForm({ ...editForm, contact: e.target.value })} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink placeholder:text-ash focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all" placeholder="+91 9876543210" />
           </div>
+          
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowEdit(false)} className="flex-1 py-2.5 border border-[var(--hairline)] rounded-[16px] text-sm font-medium text-[var(--mute)] hover:bg-[var(--surface-card)] transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-[var(--primary)] text-white rounded-[16px] text-sm font-semibold hover:bg-[var(--primary-pressed)] transition-colors disabled:opacity-50">
+            <button type="button" onClick={() => setShowEdit(false)} className="flex-1 h-10 text-sm font-bold text-ink bg-secondary-bg rounded-md hover:bg-secondary-pressed transition-colors cursor-pointer">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 h-10 text-sm font-bold text-white bg-primary rounded-md hover:bg-primary-pressed transition-colors disabled:opacity-50 cursor-pointer">
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>

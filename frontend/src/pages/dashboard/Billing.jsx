@@ -11,7 +11,7 @@ export default function Billing() {
   useEffect(() => { (async () => { try { setUsage(await getUsage()); } catch { /* ignore */ } finally { setLoading(false); } })(); }, []);
 
   if (loading) return <div className="flex items-center justify-center py-32"><LoadingSpinner text="Loading usage..." /></div>;
-  if (!usage) return <div className="text-center py-20 text-[var(--mute)]">Unable to load usage data.</div>;
+  if (!usage) return <div className="text-center py-20 text-mute">Unable to load usage data.</div>;
 
   const scanPct = usage.max_scans_per_month > 0 ? Math.round((usage.current_month_scans / usage.max_scans_per_month) * 100) : 0;
   const userPct = usage.max_users > 0 ? Math.round((usage.current_users / usage.max_users) * 100) : 0;
@@ -19,8 +19,8 @@ export default function Billing() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-[28px] font-bold text-[var(--ink)]" style={{ letterSpacing: "-1.2px" }}>Usage & Plan</h1>
-        <p className="text-sm text-[var(--mute)] mt-1">Resource consumption this month.</p>
+        <h1 className="text-2xl sm:text-[28px] font-bold text-ink tracking-[-1.2px] leading-tight">Usage & Plan</h1>
+        <p className="text-sm text-mute mt-1">Resource consumption this month.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -30,7 +30,7 @@ export default function Billing() {
         <StatsCard label="Usage" value={`${scanPct}%`} icon={TrendingUp} />
       </div>
 
-      <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px] p-6 space-y-6">
+      <div className="bg-canvas border border-hairline rounded-md p-6 space-y-6">
         <UsageBar label="Scan Usage" current={usage.current_month_scans} max={usage.max_scans_per_month} pct={scanPct} />
         <UsageBar label="User Seats" current={usage.current_users} max={usage.max_users} pct={userPct} />
       </div>
@@ -39,15 +39,15 @@ export default function Billing() {
 }
 
 function UsageBar({ label, current, max, pct }) {
-  const color = pct > 80 ? "bg-[var(--primary)]" : pct > 50 ? "bg-amber-500" : "bg-[#103c25]";
+  const color = pct > 80 ? "bg-primary" : pct > 50 ? "bg-amber-500" : "bg-success";
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold text-[var(--ink)]">{label}</span>
-        <span className="text-sm text-[var(--mute)]">{current} / {max}</span>
+        <span className="text-sm font-semibold text-ink">{label}</span>
+        <span className="text-sm text-mute font-bold">{current} / {max}</span>
       </div>
-      <div className="h-2 bg-[var(--surface-card)] rounded-[9999px] overflow-hidden">
-        <div className={`h-full rounded-[9999px] transition-all ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+      <div className="h-2 bg-surface-card rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
       </div>
     </div>
   );
