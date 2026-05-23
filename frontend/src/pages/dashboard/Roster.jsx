@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { listRoster, removeDoctor } from "../../api/users";
 import { useAuth } from "../../context/AuthContext";
-import { Users, Trash2, CheckCircle, XCircle, ShieldCheck, Copy } from "lucide-react";
+import { Users, Trash2, Copy } from "lucide-react";
 import Badge from "../../components/ui/Badge";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import EmptyState from "../../components/ui/EmptyState";
@@ -44,21 +44,21 @@ export default function Roster() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[28px] font-bold text-[var(--ink)]">Staff Roster</h1>
-          <p className="text-[var(--ash)] mt-1">{roster.length} doctor{roster.length !== 1 ? "s" : ""} in your hospital.</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-ink tracking-[-1.2px] leading-tight">Staff Roster</h1>
+          <p className="text-sm text-mute mt-1">{roster.length} doctor{roster.length !== 1 ? "s" : ""} in your hospital.</p>
         </div>
       </div>
 
       {/* Invite code banner */}
       {user?.invite_code && (
-        <div className="bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-surface-card border border-hairline rounded-md p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-[var(--ink)]">Invite Code</p>
-            <p className="text-sm text-[var(--primary)]">Share this code with doctors to join your hospital.</p>
+            <p className="font-bold text-ink tracking-tight">Invite Code</p>
+            <p className="text-sm text-primary font-semibold">Share this code with doctors to join your hospital.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xl font-mono font-bold text-[var(--ink)] bg-[var(--canvas)] px-4 py-2 rounded-[16px] border border-[var(--hairline)]">{user.invite_code}</span>
-            <button onClick={() => { navigator.clipboard.writeText(user.invite_code); toast.success("Invite code copied!"); }} className="p-2 bg-blue-100 hover:bg-blue-200 text-[var(--primary)] rounded-[16px] transition-colors">
+            <span className="text-xl font-mono font-bold text-ink bg-canvas px-4 py-2 rounded-md border border-hairline tracking-widest">{user.invite_code}</span>
+            <button onClick={() => { navigator.clipboard.writeText(user.invite_code); toast.success("Invite code copied!"); }} className="p-2 bg-secondary-bg hover:bg-secondary-pressed text-ink rounded-md transition-colors cursor-pointer" title="Copy">
               <Copy className="w-4 h-4" />
             </button>
           </div>
@@ -68,16 +68,16 @@ export default function Roster() {
       {roster.length === 0 ? (
         <EmptyState icon={Users} title="No doctors yet" description="Share your invite code to onboard doctors." />
       ) : (
-        <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px]  overflow-hidden divide-y divide-[var(--hairline)]">
+        <div className="bg-canvas border border-hairline rounded-md overflow-hidden divide-y divide-hairline">
           {roster.map((d) => (
-            <div key={d.email} className="px-6 py-5 flex items-center justify-between hover:bg-[var(--surface-card)] transition-colors">
+            <div key={d.email} className="px-6 py-5 flex items-center justify-between hover:bg-surface-card transition-colors">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-surface-card text-ink flex items-center justify-center font-bold text-sm">
                   {d.email?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-[var(--ink)]">{d.email}</p>
-                  <p className="text-xs text-[var(--ash)]">{d.role}</p>
+                  <p className="font-semibold text-ink text-sm">{d.email}</p>
+                  <p className="text-xs text-ash font-medium">{d.role}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export default function Roster() {
                 <Badge variant={d.has_passkey ? "info" : "default"}>
                   {d.has_passkey ? "Passkey" : "Password"}
                 </Badge>
-                <button onClick={() => setConfirmRemove(d.email)} className="p-2 text-[var(--ash)] hover:text-red-600 hover:bg-red-50 rounded-[16px] transition-colors" title="Remove">
+                <button onClick={() => setConfirmRemove(d.email)} className="p-2 text-ash hover:text-error hover:bg-red-50 rounded-md transition-colors cursor-pointer" title="Remove">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

@@ -45,6 +45,7 @@ function App() {
         <Routes>
           {/* ── Public ─────────────────────────────────────── */}
           <Route path="/" element={<Landing />} />
+          <Route path="/landing" element={<Landing />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
           <Route path="/magic-login" element={<MagicLogin />} />

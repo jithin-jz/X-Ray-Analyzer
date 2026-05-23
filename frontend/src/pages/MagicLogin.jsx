@@ -31,29 +31,29 @@ export default function MagicLogin() {
   }, [isSuccess, token, login, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--surface-soft)]">
-      <div className="w-full max-w-md bg-[var(--canvas)] border border-[var(--hairline)] rounded-[32px] p-8 text-center">
-        <div className={`w-14 h-14 rounded-[16px] mx-auto mb-5 flex items-center justify-center ${
-          isSuccess === true ? "bg-[var(--success-pale)]" : isSuccess === false ? "bg-red-50" : "bg-[var(--surface-card)]"
+    <div className="min-h-screen flex items-center justify-center p-4 bg-surface-soft">
+      <div className="w-full max-w-md bg-canvas border border-hairline rounded-lg p-8 text-center shadow-sm">
+        <div className={`w-14 h-14 rounded-md mx-auto mb-5 flex items-center justify-center ${
+          isSuccess === true ? "bg-success-pale" : isSuccess === false ? "bg-red-50" : "bg-surface-card"
         }`}>
           {isSuccess === true ? (
-            <CheckCircle className="text-[var(--success)] w-7 h-7" />
+            <CheckCircle className="text-success w-7 h-7" />
           ) : isSuccess === false ? (
-            <AlertCircle className="text-[var(--error)] w-7 h-7" />
+            <AlertCircle className="text-error w-7 h-7" />
           ) : (
-            <KeyRound className="text-[var(--ink)] w-7 h-7 animate-pulse" />
+            <KeyRound className="text-ink w-7 h-7 animate-pulse" />
           )}
         </div>
 
-        <h2 className="text-xl font-semibold text-[var(--ink)] mb-2">Magic Login</h2>
-        <p className={`text-sm ${isSuccess === false ? "text-[var(--error)]" : "text-[var(--mute)]"}`}>
+        <h2 className="text-xl font-bold tracking-tight text-ink mb-2">Magic Login</h2>
+        <p className={`text-sm font-semibold ${isSuccess === false ? "text-error" : "text-mute"}`}>
           {status}
         </p>
 
         {isSuccess === false && (
           <button
             onClick={() => navigate("/login")}
-            className="mt-6 px-5 py-2.5 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] transition-colors"
+            className="mt-6 h-10 px-5 text-sm font-bold text-ink bg-secondary-bg rounded-md hover:bg-secondary-pressed transition-colors cursor-pointer"
           >
             Return to Login
           </button>

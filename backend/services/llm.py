@@ -98,12 +98,22 @@ AI Model Prediction: {prediction} (Confidence: {round(confidence * 100)}%)
 Full Probability Map: {probabilities}
 
 Write a professional, structured clinical note summary based on this AI prediction.
-Structure the note with:
-1. FINDINGS SUMMARY: State the AI model's prediction and the primary findings.
-2. DIFFERENTIAL DIAGNOSIS / CLINICAL SIGNIFICANCE: What this points to clinically.
-3. RECOMMENDATIONS: Suggested next clinical steps (e.g. confirmatory imaging, clinical correlation).
+You MUST format each section using short, concise bullet points (list format) and keep it extremely brief and high-yield. Do not write paragraphs.
 
-Keep the language professional, concise, and scientific. Format in markdown.
+Structure the note exactly as:
+### Findings Summary
+- State the primary prediction and its confidence level.
+- Highlight any secondary key metrics or class exclusions.
+
+### Differential Diagnosis & Significance
+- Clinical interpretation of the primary findings.
+- Note any potential differential considerations.
+
+### Recommendations
+- Practical, short diagnostic/therapeutic next steps.
+- Timeline or correlation suggestion.
+
+Keep the language professional, clinical, and scientific. Format in clean markdown lists with bullet points.
 """
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(

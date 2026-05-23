@@ -72,10 +72,10 @@ export default function Scans() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-[22px] sm:text-[28px] font-bold text-[var(--ink)]" style={{ letterSpacing: "-1.2px" }}>X-Ray Scans</h1>
-          <p className="text-[13px] sm:text-sm text-[var(--mute)] mt-0.5">{scans.length} total</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-ink tracking-[-1.2px] leading-tight">X-Ray Scans</h1>
+          <p className="text-sm text-mute mt-1">{scans.length} total</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[9999px] hover:bg-[var(--primary-pressed)] transition-colors w-full sm:w-auto">
+        <button onClick={() => setShowCreate(true)} className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-bold text-white bg-primary rounded-md hover:bg-primary-pressed transition-colors w-full sm:w-auto cursor-pointer">
           <Plus className="w-4 h-4" /> New Scan
         </button>
       </div>
@@ -83,17 +83,17 @@ export default function Scans() {
       {scans.length === 0 ? (
         <EmptyState icon={ScanLine} title="No scans yet" description="Create a scan to upload and analyze X-ray images." />
       ) : (
-        <div className="bg-[var(--canvas)] border border-[var(--hairline)] rounded-[16px] overflow-hidden divide-y divide-[var(--hairline)]">
+        <div className="bg-canvas border border-hairline rounded-md overflow-hidden divide-y divide-hairline">
           {scans.map((s) => {
             const patient = patients.find((p) => p.patient_id === s.patient_id);
             const bpLabel = bodyParts[s.body_part]?.label || s.body_part || "Scan";
             return (
               <div key={s.scan_id} className="px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-[var(--surface-card)] rounded-[16px] flex items-center justify-center text-[var(--mute)]"><Activity className="w-4 h-4" /></div>
+                  <div className="w-9 h-9 bg-surface-card rounded-md flex items-center justify-center text-mute"><Activity className="w-4 h-4" /></div>
                   <div>
-                    <p className="text-sm font-semibold text-[var(--ink)]">{patient?.name || "Unknown"} — {bpLabel}</p>
-                    <p className="text-xs text-[var(--ash)]">
+                    <p className="text-sm font-semibold text-ink">{patient?.name || "Unknown"} — {bpLabel}</p>
+                    <p className="text-xs text-ash">
                       {s.ai_result ? `${s.ai_result.prediction} · ${Math.round(s.ai_result.confidence * 100)}%` : s.image_path ? "Image uploaded" : "No image"}
                     </p>
                   </div>
@@ -102,12 +102,12 @@ export default function Scans() {
                   <Badge variant={STATUS_MAP[s.status]}>{s.status}</Badge>
                   {s.ai_result && <Badge variant="purple">{s.ai_result.prediction}</Badge>}
                   {s.status === "uploaded" && s.image_path && (
-                    <button onClick={() => handleAnalyze(s)} disabled={analyzing === s.scan_id} className="px-3 py-1.5 text-xs font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[9999px] hover:bg-[var(--primary-pressed)] disabled:opacity-50 flex items-center gap-1 transition-colors">
+                    <button onClick={() => handleAnalyze(s)} disabled={analyzing === s.scan_id} className="px-3 h-8 text-xs font-bold text-white bg-primary rounded-md hover:bg-primary-pressed disabled:opacity-50 flex items-center gap-1 transition-colors cursor-pointer">
                       {analyzing === s.scan_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} Analyze
                     </button>
                   )}
-                  <button onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)} className="p-2 text-[var(--ash)] hover:text-[var(--ink)] hover:bg-[var(--surface-card)] rounded-[16px] transition-colors"><Eye className="w-4 h-4" /></button>
-                  <button onClick={() => setConfirmDelete(s.scan_id)} className="p-2 text-[var(--ash)] hover:text-[var(--error)] hover:bg-red-50 rounded-[16px] transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)} className="p-2 text-ash hover:text-ink hover:bg-surface-card rounded-md transition-colors cursor-pointer"><Eye className="w-4 h-4" /></button>
+                  <button onClick={() => setConfirmDelete(s.scan_id)} className="p-2 text-ash hover:text-error hover:bg-red-50 rounded-md transition-colors cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             );
@@ -118,36 +118,45 @@ export default function Scans() {
       {/* Create scan modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New X-Ray Scan">
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 rounded-[16px] bg-red-50 text-[var(--error)] text-sm">{error}</div>}
+          {error && <div className="p-3 rounded-md bg-red-50 text-error text-sm font-semibold border border-red-100">{error}</div>}
 
           {/* Patient selector */}
-          <select required value={selectedPatient} onChange={(e) => setSelectedPatient(e.target.value)} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]">
-            <option value="">Select patient...</option>
-            {patients.map((p) => <option key={p.patient_id} value={p.patient_id}>{p.name} ({p.age}y)</option>)}
-          </select>
+          <div>
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Select Patient</label>
+            <select required value={selectedPatient} onChange={(e) => setSelectedPatient(e.target.value)} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all cursor-pointer">
+              <option value="">Select patient...</option>
+              {patients.map((p) => <option key={p.patient_id} value={p.patient_id}>{p.name} ({p.age}y)</option>)}
+            </select>
+          </div>
 
           {/* Body part selector (dynamic from API) */}
-          <select value={bodyPart} onChange={(e) => setBodyPart(e.target.value)} className="w-full px-4 py-3 bg-[var(--surface-card)] border border-[var(--hairline)] rounded-[16px] text-sm focus:outline-none focus:border-[var(--ink)]">
-            {Object.entries(bodyParts).map(([key, cfg]) => (
-              <option key={key} value={key}>{cfg.label}</option>
-            ))}
-            {Object.keys(bodyParts).length === 0 && <option value="chest">Chest / Thorax</option>}
-          </select>
+          <div>
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Body Part</label>
+            <select value={bodyPart} onChange={(e) => setBodyPart(e.target.value)} className="w-full h-11 px-4 bg-canvas border border-hairline rounded-md text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[var(--focus)] focus:border-ink transition-all cursor-pointer">
+              {Object.entries(bodyParts).map(([key, cfg]) => (
+                <option key={key} value={key}>{cfg.label}</option>
+              ))}
+              {Object.keys(bodyParts).length === 0 && <option value="chest">Chest / Thorax</option>}
+            </select>
+          </div>
 
           {/* Optional description of selected body part */}
           {bodyParts[bodyPart]?.description && (
-            <p className="text-xs text-[var(--ash)] px-1">{bodyParts[bodyPart].description}</p>
+            <p className="text-xs text-ash px-1 font-semibold">{bodyParts[bodyPart].description}</p>
           )}
 
           {/* File upload */}
-          <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-[var(--hairline)] rounded-[16px] p-8 text-center cursor-pointer hover:border-[var(--ash)] transition-colors">
-            <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files[0])} className="hidden" />
-            {selectedFile ? <span className="text-sm font-semibold text-[var(--ink)]">{selectedFile.name}</span> : <span className="text-sm text-[var(--ash)]">Click to upload X-ray image (optional — can upload later)</span>}
+          <div>
+            <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">Upload X-ray Image</label>
+            <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-hairline rounded-md p-8 text-center cursor-pointer hover:border-ash transition-colors bg-surface-card">
+              <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files[0])} className="hidden" />
+              {selectedFile ? <span className="text-sm font-semibold text-ink">{selectedFile.name}</span> : <span className="text-sm text-ash font-medium">Click to upload X-ray image (optional — can upload later)</span>}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowCreate(false)} className="flex-1 py-3 text-sm font-bold text-[var(--ink)] bg-[var(--secondary-bg)] rounded-[16px] hover:bg-[var(--secondary-pressed)] transition-colors">Cancel</button>
-            <button type="submit" disabled={creating} className="flex-1 py-3 text-sm font-bold text-[var(--on-primary)] bg-[var(--primary)] rounded-[16px] hover:bg-[var(--primary-pressed)] disabled:opacity-50 transition-colors">{creating ? "Creating..." : "Create"}</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="flex-1 h-10 text-sm font-bold text-ink bg-secondary-bg rounded-md hover:bg-secondary-pressed transition-colors cursor-pointer">Cancel</button>
+            <button type="submit" disabled={creating} className="flex-1 h-10 text-sm font-bold text-white bg-primary rounded-md hover:bg-primary-pressed disabled:opacity-50 transition-colors cursor-pointer">{creating ? "Creating..." : "Create"}</button>
           </div>
         </form>
       </Modal>
