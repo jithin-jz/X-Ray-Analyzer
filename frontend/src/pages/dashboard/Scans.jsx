@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { listScans, createScan, uploadScanImage, analyzeScan, deleteScan, getBodyParts } from "../../api/scans";
+import { listScans, createScan, uploadScanImage, analyzeScan, deleteScan, getBodyParts, scanImageUrl } from "../../api/scans";
 import { listPatients } from "../../api/patients";
-import { ScanLine, Plus, Zap, Trash2, Eye, Loader2, Activity } from "lucide-react";
+import { ScanLine, Plus, Zap, Trash2, Eye, Loader2, Image as ImageIcon } from "lucide-react";
 import Modal from "../../components/ui/Modal";
 import Badge from "../../components/ui/Badge";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import EmptyState from "../../components/ui/EmptyState";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import AuthImage from "../../components/ui/AuthImage";
 
 const STATUS_MAP = { uploaded: "info", processing: "warning", analyzed: "success", failed: "danger" };
 
@@ -83,31 +84,89 @@ export default function Scans() {
       {scans.length === 0 ? (
         <EmptyState icon={ScanLine} title="No scans yet" description="Create a scan to upload and analyze X-ray images." />
       ) : (
-        <div className="bg-canvas border border-hairline rounded-md overflow-hidden divide-y divide-hairline">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {scans.map((s) => {
             const patient = patients.find((p) => p.patient_id === s.patient_id);
             const bpLabel = bodyParts[s.body_part]?.label || s.body_part || "Scan";
             return (
-              <div key={s.scan_id} className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-surface-card rounded-md flex items-center justify-center text-mute"><Activity className="w-4 h-4" /></div>
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{patient?.name || "Unknown"} — {bpLabel}</p>
-                    <p className="text-xs text-ash">
-                      {s.ai_result ? `${s.ai_result.prediction} · ${Math.round(s.ai_result.confidence * 100)}%` : s.image_path ? "Image uploaded" : "No image"}
-                    </p>
+              <div key={s.scan_id} className="bg-canvas border border-hairline rounded-md overflow-hidden flex flex-col hover:border-ash transition-all group shadow-sm hover:shadow-md">
+                {/* Image / Thumbnail Container */}
+                <div className="h-44 w-full bg-[#0c0c0e] relative flex items-center justify-center overflow-hidden border-b border-hairline-soft select-none">
+                  {s.image_path ? (
+                    <AuthImage
+                      src={scanImageUrl(s.scan_id)}
+                      alt={`${bpLabel} X-ray`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-ash gap-2">
+                      <ScanLine className="w-8 h-8 opacity-60" strokeWidth={1.5} />
+                      <span className="text-xs font-semibold">No X-ray image</span>
+                    </div>
+                  )}
+                  {/* Floating badges */}
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none">
+                    <Badge variant={STATUS_MAP[s.status]}>{s.status}</Badge>
+                    {s.ai_result && (
+                      <Badge variant={s.ai_result.prediction?.toLowerCase().includes("normal") ? "success" : "purple"}>
+                        {s.ai_result.prediction}
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={STATUS_MAP[s.status]}>{s.status}</Badge>
-                  {s.ai_result && <Badge variant="purple">{s.ai_result.prediction}</Badge>}
-                  {s.status === "uploaded" && s.image_path && (
-                    <button onClick={() => handleAnalyze(s)} disabled={analyzing === s.scan_id} className="px-3 h-8 text-xs font-bold text-white bg-primary rounded-md hover:bg-primary-pressed disabled:opacity-50 flex items-center gap-1 transition-colors cursor-pointer">
-                      {analyzing === s.scan_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} Analyze
+
+                {/* Card Content */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-bold text-ink truncate" title={patient?.name || "Unknown Patient"}>
+                      {patient?.name || "Unknown Patient"}
+                    </h3>
+                    <p className="text-xs font-bold text-mute uppercase tracking-wider">{bpLabel}</p>
+                    
+                    {/* Diagnostic Summary / Status */}
+                    {s.ai_result ? (
+                      <div className="pt-2 flex items-center justify-between border-t border-hairline-soft">
+                        <span className="text-xs text-ash font-semibold">Confidence</span>
+                        <span className="text-sm font-bold text-ink">{Math.round(s.ai_result.confidence * 100)}%</span>
+                      </div>
+                    ) : s.image_path ? (
+                      <p className="text-xs text-mute italic font-semibold pt-1">Ready for analysis</p>
+                    ) : (
+                      <p className="text-xs text-ash italic pt-1">Awaiting image upload</p>
+                    )}
+                  </div>
+                  
+                  {/* Card Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-hairline-soft">
+                    {s.status === "uploaded" && s.image_path && (
+                      <button
+                        onClick={() => handleAnalyze(s)}
+                        disabled={analyzing === s.scan_id}
+                        className="flex-1 h-9 px-3 text-xs font-bold text-white bg-primary rounded-md hover:bg-primary-pressed disabled:opacity-50 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {analyzing === s.scan_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                        Analyze
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)}
+                      className={`${
+                        s.status === "uploaded" && s.image_path ? "px-3" : "flex-1"
+                      } h-9 bg-secondary-bg hover:bg-secondary-pressed text-ink rounded-md text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer`}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      {!(s.status === "uploaded" && s.image_path) && "View Details"}
                     </button>
-                  )}
-                  <button onClick={() => navigate(`/dashboard/scans/${s.scan_id}`)} className="p-2 text-ash hover:text-ink hover:bg-surface-card rounded-md transition-colors cursor-pointer"><Eye className="w-4 h-4" /></button>
-                  <button onClick={() => setConfirmDelete(s.scan_id)} className="p-2 text-ash hover:text-error hover:bg-red-50 rounded-md transition-colors cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                    
+                    <button
+                      onClick={() => setConfirmDelete(s.scan_id)}
+                      className="w-9 h-9 shrink-0 bg-transparent hover:bg-red-50 text-ash hover:text-error border border-hairline hover:border-red-100 rounded-md flex items-center justify-center transition-all cursor-pointer"
+                      title="Delete Scan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
