@@ -52,6 +52,6 @@ backend/routes/ai/models/*.pth
 # Runtime uploads (user X-ray images and generated Grad-CAM heatmaps)
 backend/uploads/
 
-# NOTE: backend/.env is intentionally NOT ignored — it is committed to the repo
-# so the app works out of the box on a fresh clone.
-# Rotate any secrets after sharing the repo publicly.
+# Local environment variables
+backend/.env
+
