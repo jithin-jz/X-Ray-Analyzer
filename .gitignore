@@ -55,3 +55,12 @@ backend/uploads/
 # Local environment variables
 backend/.env
 
+# Terraform
+terraform/.terraform/
+terraform/terraform.exe
+terraform/terraform.zip
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+
+

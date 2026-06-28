@@ -16,10 +16,10 @@ RUN apt-get update && apt-get install -y \
 # Install Python deps
 # PyTorch CPU wheels are large — install from the official index first
 COPY requirements.txt .
-RUN pip install --no-cache-dir \
+RUN pip install --default-timeout=1000 --no-cache-dir \
     torch==2.3.0 torchvision==0.18.0 \
     --index-url https://download.pytorch.org/whl/cpu \
- && pip install --no-cache-dir -r requirements.txt
+ && pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
 COPY . .
 
