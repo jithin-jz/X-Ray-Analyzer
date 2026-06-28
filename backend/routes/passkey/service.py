@@ -116,6 +116,7 @@ async def verify_login(email: str, response: dict, db: AsyncIOMotorDatabase) -> 
             credential_current_sign_count=0,
         )
     except Exception as e:
+        print(f"WebAuthn verify error: {e}", flush=True)
         raise BadRequestException(str(e)) from e
 
     delete_challenge(email)
