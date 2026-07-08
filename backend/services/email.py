@@ -42,6 +42,7 @@ def send_otp_email(to_email: str, otp: str):
     subject = f"Your {settings.APP_NAME} Verification Code"
     template = env.get_template("otp.html")
     body = template.render(otp=otp)
+    print(f"\n🔑 [LOCAL DEV] OTP Code for {to_email}: {otp}\n", flush=True)
     send_email(to_email, subject, body)
 
 
@@ -50,4 +51,6 @@ def send_magic_link_email(to_email: str, token: str, origin: str):
     magic_link = f"{origin}/magic-login?token={token}"
     template = env.get_template("magic_link.html")
     body = template.render(magic_link=magic_link)
+    print(f"\n🔑 [LOCAL DEV] Reset Magic Link for {to_email}: {magic_link}\n", flush=True)
     send_email(to_email, subject, body)
+
