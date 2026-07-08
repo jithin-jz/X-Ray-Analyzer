@@ -1,4 +1,3 @@
-
 services:
   api:
     build: .
@@ -7,8 +6,19 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      # 1. Volume Mount for AI Models: Prevents rebuilding the container when weights change
+      - ./models:/app/models
     env_file:
       - .env
+    environment:
+      # 2. AI & Storage Explicit Environment Variables (Pulls from .env)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-xray-analyzer-bucket}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # 3. DB connection explicitly linking to the mongo service container
+      - MONGO_URI=mongodb://root:example@mongodb:27017/ai_xray_master?authSource=admin
     depends_on:
       - mongodb
       - redis
