@@ -64,3 +64,8 @@ terraform/*.tfstate.backup
 terraform/*.tfvars
 
 
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
